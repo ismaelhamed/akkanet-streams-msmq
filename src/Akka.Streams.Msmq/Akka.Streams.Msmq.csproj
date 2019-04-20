@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <Version>0.7.0</Version>
+    <Authors>Ismael Hamed</Authors>
+    <Company />
+    <PackageProjectUrl>https://github.com/ismaelhamed/akka-streams-msmq</PackageProjectUrl>
+    <Copyright>Copyright © 2019 Ismael Hamed</Copyright>
+    <RepositoryUrl>https://github.com/ismaelhamed/akka-streams-msmq</RepositoryUrl>
+    <PackageTags>akka;actors;actor model;Akka;concurrency;streams;msmq</PackageTags>
+    <PackageReleaseNotes>First working prototype</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Akka" Version="1.4.8" />
+    <PackageReference Include="Akka.Streams" Version="1.4.8" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Messaging" />
+  </ItemGroup>
+
+</Project>

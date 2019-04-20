@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <PackageTags>akka;actors;actor model;Akka;concurrency;streams;msmq</PackageTags>
+    <Copyright>Copyright © 2019 Ismael Hamed</Copyright>
+    <Authors>Ismael Hamed</Authors>
+    <PackageReleaseNotes>First working prototype</PackageReleaseNotes>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <PackageIconUrl>
+    </PackageIconUrl>
+    <PackageProjectUrl>https://github.com/ismaelhamed/akka-streams-msmq</PackageProjectUrl>
+    <PackageLicenseUrl>
+    </PackageLicenseUrl>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup>
+    <XunitVersion>2.3.1</XunitVersion>
+    <TestSdkVersion>15.9.0</TestSdkVersion>
+  </PropertyGroup>
+</Project>
