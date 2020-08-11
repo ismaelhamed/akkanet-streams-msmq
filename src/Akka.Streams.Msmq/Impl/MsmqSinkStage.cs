@@ -53,8 +53,7 @@ namespace Akka.Streams.Msmq
                             _stage.Queue.Send(message, _stage.Queue.Transactional
                                ? MessageQueueTransactionType.Single
                                : MessageQueueTransactionType.None);
-
-                            Pull(_stage.In);
+                            TryPull(_stage.In);
                         }
                         catch (Exception ex) when (ex is InvalidEnumArgumentException || ex is MessageQueueException)
                         {
@@ -76,7 +75,7 @@ namespace Akka.Streams.Msmq
 
             public override void PreStart() =>
                 // This requests one element at the Sink startup
-                Pull(_stage.In);
+                TryPull(_stage.In);
         }
 
         #endregion

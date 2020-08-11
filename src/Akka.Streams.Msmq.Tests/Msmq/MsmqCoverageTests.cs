@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Messaging;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -26,7 +28,7 @@ namespace Akka.Streams.Msmq.Tests
             const string queuePath = @".\Private$\MsmqSpecQueue";
             EnsureQueueExists(queuePath);
 
-            var messageBody = new SomeMessage() { SomeProperty = 1234 };
+            var messageBody = new SomeMessage {SomeProperty = 1234};
 
             using (var queue = new MessageQueue(queuePath, QueueAccessMode.Send))
             using (var message = new Message())
@@ -65,6 +67,7 @@ namespace Akka.Streams.Msmq.Tests
                             message.BodyStream = new MemoryStream(Encoding.UTF8.GetBytes(messageBody));
                             queue.Send(message, transaction);
                         }
+
                         count++;
                     }
                 }
@@ -74,7 +77,7 @@ namespace Akka.Streams.Msmq.Tests
         }
 
         [Fact]
-        public void SendMessagesWithSingleTransaction()
+        public void SendMessagesWithPerMessageTransaction()
         {
             const string queuePath = @".\Private$\MsmqSpecQueue";
             EnsureQueueExists(queuePath);
@@ -98,65 +101,125 @@ namespace Akka.Streams.Msmq.Tests
                         message.BodyStream = new MemoryStream(Encoding.UTF8.GetBytes(messageBody));
                         queue.Send(message, queue.Transactional ? MessageQueueTransactionType.Single : MessageQueueTransactionType.None);
                     }
+
                     count++;
                 }
             }
         }
 
-        //[Fact]
-        //public void ReceiveMessagesWithSingleTransaction()
-        //{
-        //    const string queuePath = @".\Private$\MsmqSpecQueue";
-        //    EnsureQueueExists(queuePath);
-
-        //    var messageBodys = new[]
-        //    {
-        //        "{\"Value\":\"1\"}",
-        //        "{\"Value\":\"2\"}",
-        //        "{\"Value\":\"3\"}"
-        //    };
-
-        //    using (var queue = new MessageQueue(queuePath, QueueAccessMode.Send))
-        //    {
-        //        var count = 0;
-        //        foreach (var messageBody in messageBodys)
-        //        {
-        //            if (count > 1) throw new Exception("Testing transaction");
-
-        //            using (var message = new Message())
-        //            {
-        //                message.BodyStream = new MemoryStream(Encoding.UTF8.GetBytes(messageBody));
-        //                queue.Send(message, queue.Transactional ? MessageQueueTransactionType.Single : MessageQueueTransactionType.None);
-        //            }
-        //            count++;
-        //        }
-        //    }
-        //}
-
-        // https://docs.microsoft.com/en-us/dotnet/api/system.messaging.messagequeue.beginreceive?view=netframework-4.7.2#System_Messaging_MessageQueue_BeginReceive_System_TimeSpan_System_Object_System_AsyncCallback_
         [Fact]
-        public void ReceiveMessagesAsync()
+        public void ReceiveMessages()
         {
             const string queuePath = @".\Private$\MsmqSpecQueue";
+            EnsureQueueExists(queuePath);
 
-            try
+            using (var queue = new MessageQueue(queuePath, QueueAccessMode.SendAndReceive))
             {
-                EnsureQueueExists(queuePath);
+                // Send a message to the queue.
+                queue.Send("Example Message");
 
-                using (var queue = new MessageQueue(queuePath, QueueAccessMode.Receive))
+                // Add an event handler for the ReceiveCompleted event.
+                queue.ReceiveCompleted += (sender, args) =>
                 {
-                    if (queue.IsEmpty())
-                        return;
+                    // Connect to the queue.
+                    var mq = (MessageQueue) sender;
 
-                    // TODO: t.IsFaulted
-                    var message = queue.ReceiveAsync(TimeSpan.FromMilliseconds(10))
-                        .ContinueWith(t => output.WriteLine(t.Result?.Id));
+                    try
+                    {
+                        // End the asynchronous receive operation.
+                        var message = mq.EndReceive(args.AsyncResult);
+
+                        // Do something with the message
+                        output.WriteLine("Received message with id [{0}]", message.Id);
+                    }
+                    catch (MessageQueueException ex) when (ex.MessageQueueErrorCode == MessageQueueErrorCode.IOTimeout)
+                    {
+                        // Ignore timeout
+                    }
+
+                    // Restart the asynchronous receive operation.
+                    mq.BeginReceive(TimeSpan.FromMilliseconds(10));
+                };
+
+                // Begin the asynchronous receive operation.
+                queue.BeginReceive(TimeSpan.FromMilliseconds(10));
+
+                // Simulate doing other work on the current thread.
+                Thread.Sleep(TimeSpan.FromSeconds(3));
+            }
+        }
+
+        [Theory]
+        [InlineData(10)]
+        public async Task ReceiveMessageAsync(double milliseconds)
+        {
+            const string queuePath = @".\Private$\MsmqSpecQueue";
+            EnsureQueueExists(queuePath);
+
+            using (var queue = new MessageQueue(queuePath, QueueAccessMode.SendAndReceive))
+            {
+                try
+                {
+                    // Send a message to the queue.
+                    queue.Send("Example Message");
+
+                    // Begin the asynchronous receive operation.
+                    var message = await queue.ReceiveAsync(TimeSpan.FromMilliseconds(milliseconds))
+                        .ConfigureAwait(false);
+
+                    if (message.HasValue)
+                    {
+                        // Do something with the message
+                        output.WriteLine("Received message with id [{0}]", message.Value.Id);
+                    }
+                }
+                catch (MessageQueueException ex) when (ex.MessageQueueErrorCode == MessageQueueErrorCode.IOTimeout)
+                {
+                    // Ignore timeout
                 }
             }
-            catch (MessageQueueException ex)
+        }
+
+        [Theory]
+        [InlineData(10)]
+        public async Task ReceiveMessagesAsync(double milliseconds)
+        {
+            const string queuePath = @".\Private$\MsmqSpecQueue";
+            EnsureQueueExists(queuePath);
+
+            // Define the cancellation token.
+            var source = new CancellationTokenSource();
+            source.CancelAfter(TimeSpan.FromSeconds(3));
+            var cancellationToken = source.Token; // Previously provided token
+
+            using (var queue = new MessageQueue(queuePath, QueueAccessMode.SendAndReceive))
             {
-                if (ex.MessageQueueErrorCode != MessageQueueErrorCode.IOTimeout)
-                    throw;
+                // Send a few messages to the queue.
+                queue.Send("Example Message");
+                queue.Send("Example Message");
+                queue.Send("Example Message");
+                queue.Send("Example Message");
+                queue.Send("Example Message");
+
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        // Begin the asynchronous receive operation.
+                        var message = await queue.ReceiveAsync(TimeSpan.FromMilliseconds(milliseconds))
+                            .ConfigureAwait(false);
+
+                        if (message.HasValue)
+                        {
+                            // Do something with the message
+                            output.WriteLine("Received message with id [{0}]", message.Value.Id);
+                        }
+                    }
+                    catch (MessageQueueException ex) when (ex.MessageQueueErrorCode == MessageQueueErrorCode.IOTimeout)
+                    {
+                        // Ignore timeout
+                    }
+                }
             }
         }
 
@@ -186,14 +249,13 @@ namespace Akka.Streams.Msmq.Tests
         {
             const string queuePath = @".\Private$\MsmqSpecQueue";
             EnsureQueueExists(queuePath);
-
             var count = 0;
-            var timeout = TimeSpan.FromSeconds(30);
 
+            var timeout = TimeSpan.FromSeconds(30);
             using (var queue = new MessageQueue(queuePath, QueueAccessMode.Receive))
             using (var enumerator = queue.GetMessageEnumerator2())
             {
-                while (enumerator.MoveNext(/*timeout*/))
+                while (enumerator.MoveNext( /*timeout*/))
                 {
                     if (enumerator.Current == null)
                         continue;
@@ -202,7 +264,8 @@ namespace Akka.Streams.Msmq.Tests
                     {
                         var message = queue.ReceiveById(enumerator.Current.Id, TimeSpan.FromMilliseconds(10));
                         // message.Formatter = new XmlMessageFormatter(new[] { "System.String,mscorlib" });
-                        // output.WriteLine(message?.Id);
+
+                        output.WriteLine(message?.Id);
                     }
                     catch (MessageQueueException ex)
                     {
