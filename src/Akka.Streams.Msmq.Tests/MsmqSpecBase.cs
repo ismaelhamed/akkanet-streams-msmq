@@ -7,25 +7,18 @@ namespace Akka.Streams.Msmq.Tests
     {
         protected ActorMaterializer Materializer { get; }
 
-        protected MsmqSpecBase()
-        {
-            Materializer = Sys.Materializer();
-        }
+        protected MsmqSpecBase() => Materializer = Sys.Materializer();
 
         protected void EnsureQueueExists(string queuePath, bool transactional = true)
         {
             if (!MessageQueue.Exists(queuePath))
-            {
                 MessageQueue.Create(queuePath, transactional);
-            }
         }
 
         protected void EnsureQueueIsDeleted(string queuePath)
         {
             if (MessageQueue.Exists(queuePath))
-            {
                 MessageQueue.Delete(queuePath);
-            }
         }
     }
 }

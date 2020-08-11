@@ -11,7 +11,6 @@ namespace Akka.Streams.Msmq.Tests
 {
     // https://docs.particular.net/transports/msmq/operations-scripting
     // https://csharp.hotexamples.com/examples/System.Messaging/MessageQueueTransaction/Commit/php-messagequeuetransaction-commit-method-examples.html
-    // https://github.com/pmacn/Messaging/blob/master/src/Messaging/MessageQueueExtensions.cs
 
     public class MsmqSinkSpec : MsmqSpecBase, IClassFixture<MessageQueueFixture>
     {
@@ -28,11 +27,13 @@ namespace Akka.Streams.Msmq.Tests
         public void A_MsmqSink_Should_Add_Elements_To_The_Queue()
         {
             var messages = Enumerable.Range(0, 5)
-                .Select(i => new SomeMessage() { SomeProperty = i });
+                .Select(i => new SomeMessage { SomeProperty = i });
+
+            var msmqSink = MsmqSink.Default(fixture.Queue);
 
             var task = Source.From(messages)
                 .Select(m => new Message(m))
-                .RunWith(MsmqSink.Create(fixture.Queue), Materializer);
+                .RunWith(msmqSink, Materializer);
 
             task.Wait(TimeSpan.FromSeconds(3)).Should().BeTrue();
             fixture.Queue.GetAllMessages().Length.Should().Be(5);
@@ -43,7 +44,7 @@ namespace Akka.Streams.Msmq.Tests
         {
             var (probe, task) = this.SourceProbe<string>()
                 .Select(x => new Message(x))
-                .ToMaterialized(MsmqSink.Create(fixture.Queue), Keep.Both)
+                .ToMaterialized(MsmqSink.Default(fixture.Queue), Keep.Both)
                 .Run(Materializer);
 
             probe.SendError(new Exception("Boom"));
@@ -65,7 +66,7 @@ namespace Akka.Streams.Msmq.Tests
 
         //    Thread.Sleep(5);
         //    EnsureQueueExists(fixture.QueuePath);
-            
+
         //    task.Wait(TimeSpan.FromSeconds(3)).Should().BeTrue();
         //    fixture.Queue.GetAllMessages().Length.Should().Be(2);
         //}
@@ -82,7 +83,7 @@ namespace Akka.Streams.Msmq.Tests
         //        .Select(x => new Message(x))
         //        .ToMaterialized(queueSink, Keep.Both)
         //        .Run(Materializer);
-            
+
         //    probe.SendNext("1");
         //    Thread.Sleep(5);
         //    EnsureQueueExists(fixture.QueuePath);

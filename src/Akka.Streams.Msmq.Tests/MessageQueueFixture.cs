@@ -8,7 +8,7 @@ namespace Akka.Streams.Msmq.Tests
         public string QueuePath { get; } = @".\Private$\MsmqSpecQueue";
         public MessageQueue Queue { get; }
 
-        public MessageQueueFixture() => Queue = new MessageQueue(QueuePath, QueueAccessMode.SendAndReceive);
+        public MessageQueueFixture() => Queue = new MessageQueue(QueuePath);
         public void Dispose() => Queue.Purge();
     }
 }
