@@ -5,6 +5,7 @@
     <Description>MSMQ adapter for Akka.NET Streams</Description>
     <TargetFramework>$(NetFrameworkTestVersion)</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>8</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +14,10 @@
 
   <ItemGroup>
     <PackageReference Include="Akka.Streams" Version="$(AkkaVersion)" />
+    <PackageReference Include="Microsoft.Net.Compilers" Version="3.7.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 

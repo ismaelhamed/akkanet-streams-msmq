@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Util;
 
@@ -5,6 +6,12 @@ namespace System.Messaging
 {
     public static class MessageQueueExtensions
     {
+        public static bool IsEmpty(this MessageQueue queue)
+        {
+            using var enumerator = queue.GetMessageEnumerator2();
+            return !enumerator.MoveNext();
+        }
+
         public static Task SendAsync(this MessageQueue queue, Message message) =>
             SendAsync(queue, message, queue.Transactional ? MessageQueueTransactionType.Single : MessageQueueTransactionType.None);
 
@@ -27,41 +34,28 @@ namespace System.Messaging
 
         public static Task<Option<Message>> ReceiveAsync(this MessageQueue queue, TimeSpan timeout) =>
             Task.Factory.FromAsync(queue.BeginReceive(timeout), queue.EndReceive)
-                .ContinueWith(t => t.IsFaulted || t.IsCanceled ? Option<Message>.None : t.Result);
+                .ContinueWith(t =>
+                {
+                    var innerException = TryUnwrapException(t.Exception);
+                    switch (innerException)
+                    {
+                        case MessageQueueException ex when ex.MessageQueueErrorCode == MessageQueueErrorCode.IOTimeout:
+                            return Option<Message>.None;
+                        case null when !t.IsFaulted && !t.IsCanceled:
+                            return new Option<Message>(t.Result);
+                        case null:
+                            return Option<Message>.None;
+                        default:
+                            queue.Close(); // ideally we would only do this in case of MessageQueueErrorCode.StaleHandle
+                            throw innerException;
+                    }
+                });
 
-        public static bool IsEmpty(this MessageQueue queue)
+        private static Exception TryUnwrapException(Exception e)
         {
-            using (var enumerator = queue.GetMessageEnumerator2())
-                return !enumerator.MoveNext();
+            if (!( e is AggregateException aggregateException )) return e;
+            aggregateException = aggregateException.Flatten();
+            return aggregateException.InnerExceptions.Count == 1 ? aggregateException.InnerExceptions[0] : e;
         }
     }
-
-    public interface IMessageQueue
-    {
-        Task SendAsync(Message message);
-        Task SendAsync(Message message, MessageQueueTransactionType transactionType);
-        Task SendAsync(Message message, MessageQueueTransaction transaction);
-        Task<Message> ReceiveAsync();
-        Task<Message> ReceiveAsync(TimeSpan timeout);
-    }
-
-    // public class MsmqQueue : IMessageQueue
-    // {
-    //     private readonly MessageQueue _queue;
-    //
-    //     public MsmqQueue(string path) => _queue = new MessageQueue(path);
-    //
-    //     public Task SendAsync(Message message) =>
-    //         _queue.SendAsync(message);
-    //
-    //     public Task SendAsync(Message message, MessageQueueTransactionType transactionType) =>
-    //         _queue.SendAsync(message, transactionType);
-    //
-    //     public Task SendAsync(Message message, MessageQueueTransaction transaction) =>
-    //         _queue.SendAsync(message, transaction);
-    //
-    //     public Task<Message> ReceiveAsync(TimeSpan? timeout = null) => timeout == null
-    //         ? _queue.ReceiveAsync()
-    //         : _queue.ReceiveAsync(timeout.Value);
-    // }
 }

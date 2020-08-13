@@ -1,14 +1,10 @@
-using System;
 using System.Messaging;
 
 namespace Akka.Streams.Msmq.Tests
 {
-    public class MessageQueueFixture : IDisposable
+    public class MessageQueueFixture
     {
         public string QueuePath { get; } = @".\Private$\MsmqSpecQueue";
-        public MessageQueue Queue { get; }
-
-        public MessageQueueFixture() => Queue = new MessageQueue(QueuePath);
-        public void Dispose() => Queue.Purge();
+        public IMessageFormatter Formatter { get; } = new XmlMessageFormatter(new[] {typeof(string)});
     }
 }

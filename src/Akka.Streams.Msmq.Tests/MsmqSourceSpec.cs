@@ -1,81 +1,123 @@
 ﻿using System;
 using System.Messaging;
-using System.Threading;
 using System.Threading.Tasks;
 using Akka.Streams.Dsl;
+using Akka.Streams.Supervision;
 using Akka.Streams.TestKit;
-using NSubstitute;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Akka.Streams.Msmq.Tests
 {
+    [Collection("MsmqQueueSpec")]
     public class MsmqSourceSpec : MsmqSpecBase, IClassFixture<MessageQueueFixture>
     {
-        private readonly MessageQueueFixture fixture;
-        private readonly ITestOutputHelper output;
-        private readonly IMessageQueue queue;
+        private readonly MessageQueueFixture _fixture;
 
         public MsmqSourceSpec(MessageQueueFixture fixture, ITestOutputHelper output)
+            : base(fixture, output) => _fixture = fixture;
+
+        [Fact]
+        public async Task A_MsmqSource_should_push_available_messages()
         {
-            this.fixture = fixture;
-            this.output = output;
-            this.queue = Substitute.For<IMessageQueue>();
+            // Send messages to the queue
+            await Queue.SendAsync(new Message("Test1"));
+            await Queue.SendAsync(new Message("Test2"));
+            await Queue.SendAsync(new Message("Test3"));
+
+            var probe = MsmqSource.Create(Queue)
+                .Take(3)
+                .Select(x => x.Value)
+                .RunWith(this.SinkProbe<Message>(), Materializer);
+
+            probe.Request(3);
+            probe.ExpectNext<Message>(msg => (string) msg.Body == "Test1");
+            probe.ExpectNext<Message>(msg => (string) msg.Body == "Test2");
+            probe.ExpectNext<Message>(msg => (string) msg.Body == "Test3");
+            probe.ExpectComplete();
         }
 
         [Fact]
-        public void MsmqSource_should_return_events()
+        public async Task A_MsmqSource_should_poll_for_messages_if_the_queue_is_empty()
         {
-            var probe = this.CreateManualSubscriberProbe<Message>();
+            // Send a message to the queue
+            await Queue.SendAsync(new Message("Test1"));
 
-            queue.ReceiveAsync()
-                .Returns(
-                    Task.FromResult(new Message("0")),
-                    Task.FromResult(new Message("1")),
-                    Task.FromResult(new Message("2")));
+            var probe = MsmqSource.Create(Queue)
+                .Take(3)
+                .Select(x => x.Value)
+                .RunWith(this.SinkProbe<Message>(), Materializer);
 
-            MsmqSource.Create(queue)
-                .To(Sink.FromSubscriber(probe))
-                //.To(Sink.ForEach<Message>(m => output.WriteLine("Body [{0}]", (string)m.Body)))
-                .Run(Materializer);
+            probe.Request(2).ExpectNext<Message>(msg => (string) msg.Body == "Test1");
+            probe.ExpectNoMsg(TimeSpan.FromSeconds(1));
 
-            // // Simulate doing other work on the current thread.
-            // Thread.Sleep(TimeSpan.FromSeconds(3));
+            await Queue.SendAsync(new Message("Test2"));
+            await Queue.SendAsync(new Message("Test3"));
 
-            var sub = probe.ExpectSubscription();
-            sub.Request(3);
-            probe.ExpectNext((Message msg) => (string) msg.Body == "0");
-            probe.ExpectNext((Message msg) => (string) msg.Body == "1");
+            probe.ExpectNext<Message>(msg => (string) msg.Body == "Test2");
+            probe.Request(1).ExpectNext<Message>(msg => (string) msg.Body == "Test3");
+            probe.Cancel();
+        }
 
-            sub.Cancel();
+        // [Fact]
+        // public async Task A_QueueSource_should_only_poll_if_demand_is_available()
+        // {
+        //     await Queue.SendAsync(new Message("Test1"));
+        //
+        //     var probe = MsmqSource.Create(Queue)
+        //         .Select(x =>
+        //         {
+        //             Queue.Purge();
+        //             return x.Value;
+        //         })
+        //         .RunWith(this.SinkProbe<Message>(), Materializer);
+        //
+        //     probe.Request(1).ExpectNext<Message>(msg => (string) msg.Body == "Test1");
+        //     await Queue.SendAsync(new Message("Test2"));
+        //     probe.ExpectNoMsg(TimeSpan.FromSeconds(3));
+        //
+        //     // Message wouldn't be visible if the source has called GetMessages even if the message wasn't pushed to the stream
+        //     (await Queue.PeekMessagesAsync(1)).Value[0].MessageText.Should().Be("Test2");
+        //
+        //     probe.Request(1).ExpectNext<Message>(msg => (string) msg.Body == "Test2");
+        // }
+
+        [Fact]
+        public void A_QueueSource_should_fail_when_an_error_occurs()
+        {
+            EnsureQueueIsDeleted(_fixture.QueuePath);
+
+            var probe = MsmqSource.Create(Queue)
+                .Take(3)
+                .Select(x => x.Value)
+                .RunWith(this.SinkProbe<Message>(), Materializer);
+
+            Output.WriteLine(probe.Request(1).ExpectError().Message);
         }
 
         [Fact]
-        public void MsmqSource_should_continue_after_returning_empty_result()
+        public async Task A_QueueSource_should_not_fail_if_the_supervision_strategy_is_not_stop_when_an_error_occurs()
         {
-            var probe = this.CreateManualSubscriberProbe<Message>();
+            EnsureQueueIsDeleted(_fixture.QueuePath);
 
-            queue.ReceiveAsync()
-                .Returns(
-                    x => Task.FromResult(new Message("0")),
-                    x => Task.FromResult(new Message("1")),
-                    x => Task.FromResult(new Message("2")),
-                    //x => { throw new Exception(); },
-                    x => null,
-                    x => Task.FromResult(new Message("4")));
+            var probe = MsmqSource.Create(Queue)
+                .Take(3)
+                .Select(x => x.Value)
+                .WithAttributes(ActorAttributes.CreateSupervisionStrategy(Deciders.ResumingDecider))
+                .RunWith(this.SinkProbe<Message>(), Materializer);
 
-            MsmqSource.Create(queue)
-                .To(Sink.FromSubscriber(probe))
-                .Run(Materializer);
+            probe.Request(3).ExpectNoMsg();
 
-            var sub = probe.ExpectSubscription();
-            sub.Request(3);
-            probe.ExpectNext((Message msg) => (string) msg.Body == "0");
-            probe.ExpectNext((Message msg) => (string) msg.Body == "1");
-            probe.ExpectNext((Message msg) => (string) msg.Body == "2");
-            sub.Request(2);
-            probe.ExpectNext((Message msg) => (string) msg.Body == "3");
-            sub.Cancel();
+            EnsureQueueExists(_fixture.QueuePath);
+
+            await Queue.SendAsync(new Message("Test1"));
+            await Queue.SendAsync(new Message("Test2"));
+            await Queue.SendAsync(new Message("Test3"));
+
+            probe.ExpectNext<Message>(msg => (string) msg.Body == "Test1");
+            probe.ExpectNext<Message>(msg => (string) msg.Body == "Test2");
+            probe.ExpectNext<Message>(msg => (string) msg.Body == "Test3");
+            probe.ExpectComplete();
         }
     }
 }

@@ -7,6 +7,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Streams.Msmq", "Akka.S
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Streams.Msmq.Tests", "Akka.Streams.Msmq.Tests\Akka.Streams.Msmq.Tests.csproj", "{1AC5B44F-2937-41F0-B907-183C56F05190}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{C285AF68-D2E8-48D1-8F1F-5725325B5AE2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Consumer", "Consumer\Consumer.csproj", "{6B976DD3-10C2-49F0-A96E-A8593F4736A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Producer", "Producer\Producer.csproj", "{0AFA46AA-3610-46B3-8497-474E8BB2096C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,11 +27,23 @@ Global
 		{1AC5B44F-2937-41F0-B907-183C56F05190}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1AC5B44F-2937-41F0-B907-183C56F05190}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1AC5B44F-2937-41F0-B907-183C56F05190}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B976DD3-10C2-49F0-A96E-A8593F4736A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B976DD3-10C2-49F0-A96E-A8593F4736A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B976DD3-10C2-49F0-A96E-A8593F4736A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B976DD3-10C2-49F0-A96E-A8593F4736A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AFA46AA-3610-46B3-8497-474E8BB2096C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AFA46AA-3610-46B3-8497-474E8BB2096C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AFA46AA-3610-46B3-8497-474E8BB2096C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AFA46AA-3610-46B3-8497-474E8BB2096C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {12730E26-85E3-4715-AB04-AD8ADBFF7004}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6B976DD3-10C2-49F0-A96E-A8593F4736A4} = {C285AF68-D2E8-48D1-8F1F-5725325B5AE2}
+		{0AFA46AA-3610-46B3-8497-474E8BB2096C} = {C285AF68-D2E8-48D1-8F1F-5725325B5AE2}
 	EndGlobalSection
 EndGlobal
