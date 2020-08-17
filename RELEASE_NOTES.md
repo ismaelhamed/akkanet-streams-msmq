@@ -1,3 +1,3 @@
-#### 0.1.0 April 20 2019 ####
+#### 0.1.0 August 17 2020 ####
 
-First working prototype
+First working PoC

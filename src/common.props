@@ -1,19 +1,21 @@
 <Project>
   <PropertyGroup>
-    <PackageTags>akka;actors;actor model;Akka;concurrency;streams;msmq</PackageTags>
-    <Copyright>Copyright © 2019 Ismael Hamed</Copyright>
+    <PackageTags>akka;actors;actor model;concurrency;streams;msmq</PackageTags>
+    <Copyright>Copyright © 2020 Ismael Hamed</Copyright>
     <Authors>Ismael Hamed</Authors>
-    <PackageReleaseNotes>First working prototype</PackageReleaseNotes>
+    <PackageReleaseNotes>First working PoC</PackageReleaseNotes>
     <VersionPrefix>0.1.0</VersionPrefix>
-    <PackageIconUrl>
-    </PackageIconUrl>
+    <PackageIconUrl>http://getakka.net/images/akkalogo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/ismaelhamed/akka-streams-msmq</PackageProjectUrl>
-    <PackageLicenseUrl>
-    </PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/ismaelhamed/akka-streams-msmq/blob/dev/LICENSE</PackageLicenseUrl>
+    <Tags>akka streams msmq alpakka</Tags>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
+    <AkkaVersion>1.4.9</AkkaVersion>
     <XunitVersion>2.3.1</XunitVersion>
-    <TestSdkVersion>15.9.0</TestSdkVersion>
+    <NBenchVersion>1.2.2</NBenchVersion>
+    <TestSdkVersion>16.6.1</TestSdkVersion>
+    <NetFrameworkTestVersion>net472</NetFrameworkTestVersion>
   </PropertyGroup>
 </Project>
