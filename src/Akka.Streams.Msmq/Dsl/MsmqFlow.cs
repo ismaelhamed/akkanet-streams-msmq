@@ -1,11 +1,7 @@
-﻿//-----------------------------------------------------------------------
-// <copyright file="MsmqFlow.cs" company="Akka.NET Project">
-//     Copyright (C) 2009-2020 Lightbend Inc. <http://www.lightbend.com>
-//     Copyright (C) 2013-2020 .NET Foundation <https://github.com/akkadotnet/akka.net>
-// </copyright>
-//-----------------------------------------------------------------------
-
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Messaging;
 using Akka.Streams.Dsl;
 
@@ -13,29 +9,37 @@ namespace Akka.Streams.Msmq
 {
     public static class MsmqFlow
     {
-        private static MessageQueue queue;
-        private static readonly Func<string, MessageQueue> messageQueueFactory = queuePath =>
-            new MessageQueue(queuePath)
-            {
-                Formatter = new XmlMessageFormatter(new[] {typeof(string)})
-            };
-
-        public static Flow<Message, Done, NotUsed> Default(MessageQueue queue1) =>
+        internal static Flow<Message, Done, NotUsed> Default(MessageQueue queue, MessageQueueSettings settings) =>
             Flow.Create<Message>()
-                .SelectAsync(1 /* parallelism */, async message =>
+                .SelectAsync(settings.Parallelism, async message =>
                 {
-                    await queue1.SendAsync(message).ConfigureAwait(false);
+                    await queue.SendAsync(message).ConfigureAwait(false);
                     return Done.Instance;
                 });
 
-        public static Flow<Message, Done, NotUsed> Default(string queuePath)
+        public static Flow<Message, Done, NotUsed> Create(IEnumerable<string> queuePaths, MessageQueueSettings queueSettings = null)
         {
-            queue ??= messageQueueFactory(queuePath);
+            var settings = queueSettings ?? MessageQueueSettings.Default;
+            var routingStrategy = settings.RoutingStrategy;
+
+            var queues = new Lazy<IReadOnlyList<MessageQueue>>(() =>
+                queuePaths.Select(path =>
+                    new MessageQueue(path, settings.DenySharedReceive, settings.EnableConnectionCache, settings.AccessMode)
+                    {
+                        UseJournalQueue = settings.UseJournalQueue,
+                        Formatter = settings.MessageFormatter
+                    }).ToImmutableList());
 
             return Flow.Create<Message>()
-                .SelectAsync(1 /* parallelism */, async message =>
+                .SelectAsync(settings.Parallelism, async message =>
                 {
-                    await queue.SendAsync(message).ConfigureAwait(false);
+                    foreach (var queue in routingStrategy.GetDestinations(typeof(Message).FullName, queues.Value))
+                    {
+                        await queue.SendAsync(message, queue.Transactional
+                            ? MessageQueueTransactionType.Single
+                            : MessageQueueTransactionType.None);
+                    }
+
                     return Done.Instance;
                 });
         }

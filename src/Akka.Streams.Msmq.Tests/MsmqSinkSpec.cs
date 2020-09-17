@@ -25,7 +25,7 @@ namespace Akka.Streams.Msmq.Tests
             var messages = Enumerable.Range(0, 5)
                 .Select(i => new Message(i));
 
-            var msmqSink = MsmqSink.Default(Queue);
+            var msmqSink = Msmq.Default(Queue);
 
             var task = Source.From(messages)
                 .Select(m => new Message(m))
@@ -40,7 +40,7 @@ namespace Akka.Streams.Msmq.Tests
         {
             var (probe, task) = this.SourceProbe<string>()
                 .Select(x => new Message(x))
-                .ToMaterialized(MsmqSink.Default(Queue), Keep.Both)
+                .ToMaterialized(Msmq.Default(Queue), Keep.Both)
                 .Run(Materializer);
 
             probe.SendError(new Exception("Boom"));
@@ -53,7 +53,7 @@ namespace Akka.Streams.Msmq.Tests
             EnsureQueueIsDeleted(_fixture.QueuePath);
 
             var messages = new[] { "{\"Value\":\"1\"}", "{\"Value\":\"2\"}" };
-            var queueSink = MsmqSink.Default(Queue)
+            var queueSink = Msmq.Default(Queue)
                 .WithAttributes(ActorAttributes.CreateSupervisionStrategy(Deciders.ResumingDecider));
 
             var task = Source.From(messages)
@@ -72,7 +72,7 @@ namespace Akka.Streams.Msmq.Tests
         {
             EnsureQueueIsDeleted(_fixture.QueuePath);
 
-            var queueSink = MsmqSink.Default(Queue)
+            var queueSink = Msmq.Default(Queue)
                 .WithAttributes(ActorAttributes.CreateSupervisionStrategy(Deciders.RestartingDecider));
 
             var (probe, task) = this.SourceProbe<string>()
