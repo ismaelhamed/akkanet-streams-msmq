@@ -1,4 +1,4 @@
-﻿using System.Messaging;
+using System.Messaging;
 
 namespace Akka.Streams.Msmq.Tests
 {
@@ -7,10 +7,7 @@ namespace Akka.Streams.Msmq.Tests
     {
         protected ActorMaterializer Materializer { get; }
 
-        protected MsmqSpecBase()
-        {
-            Materializer = Sys.Materializer();
-        }
+        protected MsmqSpecBase() => Materializer = Sys.Materializer();
 
         protected void EnsureQueueExists(string queuePath, bool transactional = true)
         {

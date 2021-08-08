@@ -1,19 +1,45 @@
 <Project>
   <PropertyGroup>
     <PackageTags>akka;actors;actor model;Akka;concurrency;streams;msmq</PackageTags>
-    <Copyright>Copyright © 2019 Ismael Hamed</Copyright>
+    <Copyright>Copyright © 2021 Ismael Hamed</Copyright>
     <Authors>Ismael Hamed</Authors>
     <PackageReleaseNotes>First working prototype</PackageReleaseNotes>
-    <VersionPrefix>0.1.0</VersionPrefix>
-    <PackageIconUrl>
-    </PackageIconUrl>
+    <VersionPrefix>0.7.0</VersionPrefix>
+    <PackageIconUrl>https://getakka.net/images/akkalogo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/ismaelhamed/akka-streams-msmq</PackageProjectUrl>
-    <PackageLicenseUrl>
-    </PackageLicenseUrl>
+    <License>        
+      Copyright (c) .NET Foundation and Contributors
+      All Rights Reserved
+
+      Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License.
+      You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      See the License for the specific language governing permissions and
+      limitations under the License.
+    </License>    
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
-    <XunitVersion>2.3.1</XunitVersion>
-    <TestSdkVersion>15.9.0</TestSdkVersion>
+    <AkkaVersion>1.4.22</AkkaVersion>
+    <XunitVersion>2.4.1</XunitVersion>
+    <TestSdkVersion>16.10.0</TestSdkVersion>
   </PropertyGroup>
+  <!-- SourceLink support for all Akka.NET projects -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>  
+  <PropertyGroup>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <!-- Optional: Build symbol package (.snupkg) to distribute the PDB containing Source Link -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>  
 </Project>

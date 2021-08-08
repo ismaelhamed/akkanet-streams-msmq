@@ -27,6 +27,8 @@ namespace Akka.Streams.Msmq.Tests
         [Fact]
         public void A_MsmqSink_Should_Add_Elements_To_The_Queue()
         {
+            EnsureQueueExists(fixture.QueuePath);
+
             var messages = Enumerable.Range(0, 5)
                 .Select(i => new SomeMessage() { SomeProperty = i });
 
@@ -41,6 +43,8 @@ namespace Akka.Streams.Msmq.Tests
         [Fact]
         public void A_MsmqSink_Should_Set_The_Exception_Of_The_Task_When_An_Error_Occurs()
         {
+            EnsureQueueExists(fixture.QueuePath);
+
             var (probe, task) = this.SourceProbe<string>()
                 .Select(x => new Message(x))
                 .ToMaterialized(MsmqSink.Create(fixture.Queue), Keep.Both)
