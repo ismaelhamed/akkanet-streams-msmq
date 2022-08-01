@@ -25,8 +25,7 @@ namespace Akka.Streams.Msmq.Tests
         [Fact]
         public void A_MsmqSink_Should_Add_Elements_To_The_Queue()
         {
-            var messages = Enumerable.Range(0, 5)
-                .Select(i => new Message(i));
+            var messages = Enumerable.Range(0, 5);
 
             var queuePaths = new[] {@".\Private$\MsmqSpecQueue"};
             var msmqSink = MsmqSink.Create(queuePaths);
