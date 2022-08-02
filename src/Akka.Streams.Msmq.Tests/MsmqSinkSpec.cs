@@ -11,10 +11,7 @@ using Xunit.Abstractions;
 
 namespace Akka.Streams.Msmq.Tests
 {
-    // https://docs.particular.net/transports/msmq/operations-scripting
-    // https://csharp.hotexamples.com/examples/System.Messaging/MessageQueueTransaction/Commit/php-messagequeuetransaction-commit-method-examples.html
-    // https://github.com/pmacn/Messaging/blob/master/src/Messaging/MessageQueueExtensions.cs
-
+    [Collection("MsmqQueueSpec")]
     public class MsmqSinkSpec : MsmqSpecBase, IClassFixture<MessageQueueFixture>
     {
         private readonly MessageQueueFixture _fixture;
@@ -25,13 +22,12 @@ namespace Akka.Streams.Msmq.Tests
         [Fact]
         public void A_MsmqSink_Should_Add_Elements_To_The_Queue()
         {
-            var messages = Enumerable.Range(0, 5);
+            var messages = Enumerable.Range(0, 5)
+                .Select(i => new Message(i));
 
-            var queuePaths = new[] {@".\Private$\MsmqSpecQueue"};
-            var msmqSink = MsmqSink.Create(queuePaths);
+            var msmqSink = MsmqSink.Create(_fixture.QueuePath);
 
             var task = Source.From(messages)
-                .Select(m => new Message(m))
                 .RunWith(msmqSink, Materializer);
 
             task.Wait(TimeSpan.FromSeconds(3)).Should().BeTrue();
@@ -41,11 +37,9 @@ namespace Akka.Streams.Msmq.Tests
         [Fact]
         public void A_MsmqSink_Should_Set_The_Exception_Of_The_Task_When_An_Error_Occurs()
         {
-            var queuePaths = new[] {@".\Private$\MsmqSpecQueue"};
-
             var (probe, task) = this.SourceProbe<string>()
                 .Select(x => new Message(x))
-                .ToMaterialized(MsmqSink.Create(queuePaths), Keep.Both)
+                .ToMaterialized(MsmqSink.Create(_fixture.QueuePath), Keep.Both)
                 .Run(Materializer);
 
             probe.SendError(new Exception("Boom"));
@@ -55,10 +49,10 @@ namespace Akka.Streams.Msmq.Tests
         [Fact]
         public void A_QueueSink_should_retry_failing_messages_if_supervision_strategy_is_resume()
         {
-            var queuePaths = new[] {@".\Private$\MsmqSpecQueue"};
-            var messages = new[] { "{\"Value\":\"1\"}", "{\"Value\":\"2\"}" };
+            EnsureQueueIsDeleted(_fixture.QueuePath);
 
-            var queueSink = MsmqSink.Create(queuePaths)
+            var messages = new[] { "{\"Value\":\"1\"}", "{\"Value\":\"2\"}" };
+            var queueSink = MsmqSink.Create(_fixture.QueuePath)
                 .WithAttributes(ActorAttributes.CreateSupervisionStrategy(Deciders.ResumingDecider));
 
             var task = Source.From(messages)
@@ -75,9 +69,9 @@ namespace Akka.Streams.Msmq.Tests
         [Fact]
         public void A_QueueSink_should_skip_failing_messages_if_supervision_strategy_is_restart()
         {
-            var queuePaths = new[] {@".\Private$\MsmqSpecQueue"};
+            EnsureQueueIsDeleted(_fixture.QueuePath);
 
-            var queueSink = MsmqSink.Create(queuePaths)
+            var queueSink = MsmqSink.Create(_fixture.QueuePath)
                 .WithAttributes(ActorAttributes.CreateSupervisionStrategy(Deciders.RestartingDecider));
 
             var (probe, task) = this.SourceProbe<string>()

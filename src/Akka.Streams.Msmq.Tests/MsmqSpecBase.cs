@@ -23,7 +23,7 @@ namespace Akka.Streams.Msmq.Tests
         protected void EnsureQueueExists(string queuePath, bool transactional = true)
         {
             if (!MessageQueue.Exists(queuePath))
-                MessageQueue.Create(queuePath, transactional);
+                _ = MessageQueue.Create(queuePath, transactional);
         }
 
         protected void EnsureQueueIsDeleted(string queuePath)

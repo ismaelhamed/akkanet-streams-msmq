@@ -1,39 +1,56 @@
+using System;
 using System.Messaging;
+using Akka.Streams.Msmq.Routing;
 
 namespace Akka.Streams.Msmq
 {
-    public sealed class MessageQueueSettings
+    public class MessageQueueSettings
     {
         /// <summary>
-        /// Gets or sets a value that indicates whether this <see cref="MessageQueue"/> has exclusive access to receive messages from the queue.
+        /// Gets a value that indicates whether this <see cref="MessageQueue"/> has exclusive access to receive messages from the queue.
         /// </summary>
         public bool DenySharedReceive { get; }
 
         /// <summary>
-        /// Gets or sets a value that indicates whether a cache of connections will be maintained by the application.
+        /// Gets a value that indicates whether a cache of connections will be maintained by the application.
         /// </summary>
         public bool EnableConnectionCache { get; }
 
         /// <summary>
-        /// Gets or sets a value that indicates whether received messages are copied to the journal queue.
+        /// Gets a value that indicates whether received messages are copied to the journal queue.
         /// </summary>
         public bool UseJournalQueue { get; }
 
         /// <summary>
-        /// Specifies the access mode for a <see cref="MessageQueue" /> at creation time.
+        /// Gets the access mode for a <see cref="MessageQueue" /> at creation time.
         /// </summary>
         public QueueAccessMode AccessMode { get; }
 
         /// <summary>
-        /// Gets or sets the formatter used to serialize an object into or deserialize an object from the body of a message read from or written to the queue.
+        /// Gets the properties that are retrieved when peeking or receiving messages from a <see cref="MessageQueue"/>.
+        /// </summary>
+        public MessagePropertyFilter MessagePropertyFilter { get; }
+
+        /// <summary>
+        /// Gets the formatter used to serialize an object into or deserialize an object from the body of a message read from or written to the queue.
         /// The default is <see cref="XmlMessageFormatter"/>.
         /// </summary>
         public IMessageFormatter MessageFormatter { get; }
 
         /// <summary>
-        /// TBD
+        /// Gets the routing strategy configured to route messages between destination queues. The <see cref="BroadcastRouting"/> strategy is used by default.
         /// </summary>
-        public int Parallelism { get; }
+        public IRoutingStrategy RoutingStrategy { get; }
+
+        /// <summary>
+        /// Gets the max. number of concurrent `send` operations that a stream can process at any given time.
+        /// </summary>
+        public int MaxConcurrency { get; }
+
+        /// <summary>
+        /// Gets a value that indicates whether the queue accepts only transactions.
+        /// </summary>
+        public bool IsTransactional { get; }
 
         /// <summary>
         /// Default <see cref="MessageQueueSettings"/>
@@ -45,40 +62,73 @@ namespace Akka.Streams.Msmq
             QueueAccessMode.SendAndReceive);
 
         public MessageQueueSettings(
-            bool sharedModeDenyReceive,
+            bool denySharedReceive,
             bool enableCache,
             bool useJournalQueue,
             QueueAccessMode accessMode,
+            MessagePropertyFilter messagePropertyFilter = null,
             IMessageFormatter messageFormatter = null,
-            int parallelism = 1)
+            IRoutingStrategy routingStrategy = null,
+            int? maxConcurrency = null,
+            bool? isTransactional = null)
         {
-            DenySharedReceive = sharedModeDenyReceive;
+            DenySharedReceive = denySharedReceive;
             EnableConnectionCache = enableCache;
             UseJournalQueue = useJournalQueue;
             AccessMode = accessMode;
-            MessageFormatter = messageFormatter ?? new XmlMessageFormatter();
-            Parallelism = parallelism;
+            MessagePropertyFilter = messagePropertyFilter ?? DefaultReadPropertyFilter;
+            MessageFormatter = messageFormatter ?? new XmlMessageFormatter(new[] { "System.String,mscorlib" });
+            RoutingStrategy = routingStrategy ?? new BroadcastRouting();
+            MaxConcurrency = maxConcurrency ?? Math.Max(2, Environment.ProcessorCount);
+            IsTransactional = isTransactional ?? false;
         }
+
+        public MessageQueueSettings WithMessagePropertyFilter(MessagePropertyFilter messagePropertyFilter) =>
+            Copy(messagePropertyFilter: messagePropertyFilter);
 
         public MessageQueueSettings WithFormatter(IMessageFormatter messageFormatter) =>
             Copy(messageFormatter: messageFormatter);
 
-        public MessageQueueSettings WithParallelism(int parallelism) =>
-            Copy(parallelism: parallelism);
+        public MessageQueueSettings WithRoutingStrategy(IRoutingStrategy routingStrategy) =>
+            Copy(routingStrategy: routingStrategy);
+
+        public MessageQueueSettings WithMaxConcurrency(int maxConcurrency) =>
+            Copy(maxConcurrency: maxConcurrency);
+
+        public MessageQueueSettings WithIsTransactional(bool isTransactional) =>
+            Copy(isTransactional: isTransactional);
 
         private MessageQueueSettings Copy(
             bool? sharedModeDenyReceive = null,
             bool? enableCache = null,
             bool? useJournalQueue = null,
             QueueAccessMode? accessMode = null,
+            MessagePropertyFilter messagePropertyFilter = null,
             IMessageFormatter messageFormatter = null,
-            int? parallelism = null) =>
+            IRoutingStrategy routingStrategy = null,
+            int? maxConcurrency = null,
+            bool? isTransactional = null) =>
             new MessageQueueSettings(
                 sharedModeDenyReceive ?? DenySharedReceive,
                 enableCache ?? EnableConnectionCache,
                 useJournalQueue ?? UseJournalQueue,
                 accessMode ?? AccessMode,
+                messagePropertyFilter ?? MessagePropertyFilter,
                 messageFormatter ?? MessageFormatter,
-                parallelism ?? Parallelism);
+                routingStrategy ?? RoutingStrategy,
+                maxConcurrency ?? MaxConcurrency,
+                isTransactional ?? IsTransactional);
+
+        private static MessagePropertyFilter DefaultReadPropertyFilter => new MessagePropertyFilter
+        {
+            Id = true,
+            AppSpecific = true,
+            Body = true,
+            CorrelationId = true,
+            Extension = true,
+            Recoverable = true,
+            ResponseQueue = true,
+            TimeToBeReceived = true
+        };
     }
 }

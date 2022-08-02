@@ -11,17 +11,17 @@ namespace Akka.Streams.Msmq
     /// </summary>
     public static class MsmqSink
     {
-        /// <summary>
-        /// Creates a <see cref="Sink{TIn,TMat}"/> to send messages to an MSMQ queue
-        /// </summary>
-        /// <param name="queue">The message queue</param>
-        /// <param name="settings">TBD</param>
-        /// <returns>The <see cref="Sink{TIn,TMat}"/> for the MSMQ queue</returns>
-        internal static Sink<Message, Task> Create(MessageQueue queue, MessageQueueSettings settings) =>
-            MsmqFlow.Default(queue, settings).ToMaterialized(Sink.Ignore<Done>(), Keep.Right);
+        //public static Sink<Message, NotUsed> Create(string queuePath, MessageQueueSettings settings = null) =>
+        //    Create(new[] { queuePath }, settings);
+
+        //public static Sink<Message, NotUsed> Create(IEnumerable<string> queuePaths, MessageQueueSettings settings = null) =>
+        //    Flow.Create<Message>()
+        //        .Via(MsmqFlow.Create(queuePaths, settings))
+        //        .Log("Sink.Create")
+        //        .To(Sink.Ignore<Done>());
 
         public static Sink<Message, Task> Create(string queuePath, MessageQueueSettings settings = null) =>
-            Create(new[] {queuePath}, settings);
+            Create(new[] { queuePath }, settings);
 
         public static Sink<Message, Task> Create(IEnumerable<string> queuePaths, MessageQueueSettings settings = null) =>
             MsmqFlow.Create(queuePaths, settings).ToMaterialized(Sink.Ignore<Done>(), Keep.Right);

@@ -1,42 +1,43 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Messaging;
+using System.Threading.Tasks;
 using Akka.Streams.Dsl;
 
 namespace Akka.Streams.Msmq
 {
     public static class MsmqFlow
     {
-        internal static Flow<Message, Done, NotUsed> Default(MessageQueue queue, MessageQueueSettings settings) =>
-            Flow.Create<Message>()
-                .SelectAsync(settings.Parallelism, async message =>
-                {
-                    await queue.SendAsync(message).ConfigureAwait(false);
-                    return Done.Instance;
-                });
-
         public static Flow<Message, Done, NotUsed> Create(IEnumerable<string> queuePaths, MessageQueueSettings queueSettings = null)
         {
             var settings = queueSettings ?? MessageQueueSettings.Default;
 
             var queues = new Lazy<IReadOnlyList<MessageQueue>>(() =>
                 queuePaths.Select(path =>
-                    new MessageQueue(path, settings.DenySharedReceive, settings.EnableConnectionCache, settings.AccessMode)
+                    new MessageQueue(path, false, settings.EnableConnectionCache, QueueAccessMode.Send)
                     {
-                        UseJournalQueue = settings.UseJournalQueue,
                         Formatter = settings.MessageFormatter
                     }).ToImmutableList());
 
             return Flow.Create<Message>()
-                .SelectAsync(settings.Parallelism, async message =>
+                // TODO: Paralellism should be divided among the nr. of destinations?!
+                .SelectAsync(settings.MaxConcurrency, async message =>
                 {
-                    var queue = queues.Value[0];
-                    await queue.SendAsync(message, queue.Transactional
-                        ? MessageQueueTransactionType.Single
-                        : MessageQueueTransactionType.None);
+                    var destinations = settings.RoutingStrategy.PickDestinations(typeof(Message).FullName, queues.Value).ToArray();
+                    var tasks = ArrayPool<Task>.Shared.Rent(destinations.Length);
 
+                    for (int i = 0; i < destinations.Length; i++)
+                    {
+                        tasks[i] = destinations[i].SendAsync(message, settings.IsTransactional
+                            ? MessageQueueTransactionType.Single
+                            : MessageQueueTransactionType.None);
+                    }
+
+                    await Task.WhenAll(tasks);
+                    ArrayPool<Task>.Shared.Return(tasks);
                     return Done.Instance;
                 });
         }
