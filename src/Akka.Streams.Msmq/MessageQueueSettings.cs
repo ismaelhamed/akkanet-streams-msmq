@@ -43,14 +43,14 @@ namespace Akka.Streams.Msmq
         public IRoutingStrategy RoutingStrategy { get; }
 
         /// <summary>
-        /// Gets the max. number of concurrent `send` operations that a stream can process at any given time.
+        /// Gets a value that indicates the time to wait until a new message is available for inspection. Defaults to 10ms.
         /// </summary>
-        public int MaxConcurrency { get; }
+        public TimeSpan WaitTimeout { get; }
 
         /// <summary>
-        /// Gets a value that indicates whether the queue accepts only transactions.
+        /// Gets the max. number of concurrent `send` or `receive` operations that a stream can process at any given time. Defaults to 1.
         /// </summary>
-        public bool IsTransactional { get; }
+        public int Parallelism { get; }
 
         /// <summary>
         /// Default <see cref="MessageQueueSettings"/>
@@ -61,7 +61,7 @@ namespace Akka.Streams.Msmq
             false,
             QueueAccessMode.SendAndReceive);
 
-        public MessageQueueSettings(
+        protected MessageQueueSettings(
             bool denySharedReceive,
             bool enableCache,
             bool useJournalQueue,
@@ -69,8 +69,8 @@ namespace Akka.Streams.Msmq
             MessagePropertyFilter messagePropertyFilter = null,
             IMessageFormatter messageFormatter = null,
             IRoutingStrategy routingStrategy = null,
-            int? maxConcurrency = null,
-            bool? isTransactional = null)
+            TimeSpan? waitTimeout = null,
+            int? parallelism = null)
         {
             DenySharedReceive = denySharedReceive;
             EnableConnectionCache = enableCache;
@@ -79,8 +79,8 @@ namespace Akka.Streams.Msmq
             MessagePropertyFilter = messagePropertyFilter ?? DefaultReadPropertyFilter;
             MessageFormatter = messageFormatter ?? new XmlMessageFormatter(new[] { "System.String,mscorlib" });
             RoutingStrategy = routingStrategy ?? new BroadcastRouting();
-            MaxConcurrency = maxConcurrency ?? Math.Max(2, Environment.ProcessorCount);
-            IsTransactional = isTransactional ?? false;
+            WaitTimeout = waitTimeout ?? TimeSpan.FromMilliseconds(10);
+            Parallelism = parallelism ?? 1;
         }
 
         public MessageQueueSettings WithMessagePropertyFilter(MessagePropertyFilter messagePropertyFilter) =>
@@ -92,11 +92,11 @@ namespace Akka.Streams.Msmq
         public MessageQueueSettings WithRoutingStrategy(IRoutingStrategy routingStrategy) =>
             Copy(routingStrategy: routingStrategy);
 
-        public MessageQueueSettings WithMaxConcurrency(int maxConcurrency) =>
-            Copy(maxConcurrency: maxConcurrency);
+        public MessageQueueSettings WithWaitTimeout(TimeSpan waitTimeout) =>
+            Copy(waitTimeout: waitTimeout);
 
-        public MessageQueueSettings WithIsTransactional(bool isTransactional) =>
-            Copy(isTransactional: isTransactional);
+        public MessageQueueSettings WithParallelism(int parallelism) =>
+            Copy(maxConcurrency: parallelism);
 
         private MessageQueueSettings Copy(
             bool? sharedModeDenyReceive = null,
@@ -106,8 +106,8 @@ namespace Akka.Streams.Msmq
             MessagePropertyFilter messagePropertyFilter = null,
             IMessageFormatter messageFormatter = null,
             IRoutingStrategy routingStrategy = null,
-            int? maxConcurrency = null,
-            bool? isTransactional = null) =>
+            TimeSpan? waitTimeout = null,
+            int? maxConcurrency = null) =>
             new MessageQueueSettings(
                 sharedModeDenyReceive ?? DenySharedReceive,
                 enableCache ?? EnableConnectionCache,
@@ -116,8 +116,8 @@ namespace Akka.Streams.Msmq
                 messagePropertyFilter ?? MessagePropertyFilter,
                 messageFormatter ?? MessageFormatter,
                 routingStrategy ?? RoutingStrategy,
-                maxConcurrency ?? MaxConcurrency,
-                isTransactional ?? IsTransactional);
+                waitTimeout ?? WaitTimeout,
+                maxConcurrency ?? Parallelism);
 
         private static MessagePropertyFilter DefaultReadPropertyFilter => new MessagePropertyFilter
         {
