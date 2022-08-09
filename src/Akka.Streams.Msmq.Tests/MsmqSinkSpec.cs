@@ -11,10 +11,7 @@ using Xunit.Abstractions;
 
 namespace Akka.Streams.Msmq.Tests
 {
-    // https://docs.particular.net/transports/msmq/operations-scripting
-    // https://csharp.hotexamples.com/examples/System.Messaging/MessageQueueTransaction/Commit/php-messagequeuetransaction-commit-method-examples.html
-    // https://github.com/pmacn/Messaging/blob/master/src/Messaging/MessageQueueExtensions.cs
-
+    [Collection("MsmqQueueSpec")]
     public class MsmqSinkSpec : MsmqSpecBase, IClassFixture<MessageQueueFixture>
     {
         private readonly MessageQueueFixture _fixture;
@@ -23,75 +20,62 @@ namespace Akka.Streams.Msmq.Tests
             : base(fixture, output) => _fixture = fixture;
 
         [Fact]
-        public void A_MsmqSink_Should_Add_Elements_To_The_Queue()
+        public void MsmqSink_should_add_elements_to_the_queue()
         {
-            var messages = Enumerable.Range(0, 5);
+            EnsureQueueIsRecreated(_fixture.QueuePath);
 
-            var queuePaths = new[] {@".\Private$\MsmqSpecQueue"};
-            var msmqSink = MsmqSink.Create(queuePaths);
+            var messages = Enumerable.Range(0, 5)
+                .Select(i => new Message(i));
 
-            var task = Source.From(messages)
-                .Select(m => new Message(m))
+            var msmqSink = MsmqSink.Default(MessageQueueSettings.Default, _fixture.QueuePath);
+
+            var future = Source.From(messages)
                 .RunWith(msmqSink, Materializer);
 
-            task.Wait(TimeSpan.FromSeconds(3)).Should().BeTrue();
+            future.Wait(TimeSpan.FromSeconds(3)).Should().BeTrue();
             Queue.GetAllMessages().Length.Should().Be(5);
         }
 
         [Fact]
-        public void A_MsmqSink_Should_Set_The_Exception_Of_The_Task_When_An_Error_Occurs()
+        public void MsmqSink_should_retry_failing_messages_if_supervision_strategy_is_resume()
         {
-            var queuePaths = new[] {@".\Private$\MsmqSpecQueue"};
+            EnsureQueueIsDeleted(_fixture.QueuePath);
 
-            var (probe, task) = this.SourceProbe<string>()
-                .Select(x => new Message(x))
-                .ToMaterialized(MsmqSink.Create(queuePaths), Keep.Both)
-                .Run(Materializer);
-
-            probe.SendError(new Exception("Boom"));
-            task.Invoking(x => x.Wait(TimeSpan.FromSeconds(3))).Should().Throw<Exception>().WithMessage("Boom");
-        }
-
-        [Fact]
-        public void A_QueueSink_should_retry_failing_messages_if_supervision_strategy_is_resume()
-        {
-            var queuePaths = new[] {@".\Private$\MsmqSpecQueue"};
             var messages = new[] { "{\"Value\":\"1\"}", "{\"Value\":\"2\"}" };
-
-            var queueSink = MsmqSink.Create(queuePaths)
+            var queueSink = MsmqSink.Default(MessageQueueSettings.Default, _fixture.QueuePath)
                 .WithAttributes(ActorAttributes.CreateSupervisionStrategy(Deciders.ResumingDecider));
 
-            var task = Source.From(messages)
+            var future = Source.From(messages)
                 .Select(x => new Message(x))
                 .RunWith(queueSink, Materializer);
 
             Thread.Sleep(5);
             EnsureQueueExists(_fixture.QueuePath);
 
-            task.Wait(TimeSpan.FromSeconds(3)).Should().BeTrue();
+            future.Wait(TimeSpan.FromSeconds(3)).Should().BeTrue();
             Queue.GetAllMessages().Length.Should().Be(2);
         }
 
         [Fact]
-        public void A_QueueSink_should_skip_failing_messages_if_supervision_strategy_is_restart()
+        public void MsmqSink_should_skip_failing_messages_if_supervision_strategy_is_restart()
         {
-            var queuePaths = new[] {@".\Private$\MsmqSpecQueue"};
+            EnsureQueueIsDeleted(_fixture.QueuePath);
 
-            var queueSink = MsmqSink.Create(queuePaths)
+            var queueSink = MsmqSink.Default(MessageQueueSettings.Default, _fixture.QueuePath)
                 .WithAttributes(ActorAttributes.CreateSupervisionStrategy(Deciders.RestartingDecider));
 
-            var (probe, task) = this.SourceProbe<string>()
+            var (probe, future) = this.SourceProbe<string>()
                 .Select(x => new Message(x))
                 .ToMaterialized(queueSink, Keep.Both)
                 .Run(Materializer);
 
-            probe.SendNext("1");
-            Thread.Sleep(5);
+            probe.SendNext("1");            
             EnsureQueueExists(_fixture.QueuePath);
+            Thread.Sleep(5);
 
             probe.SendNext("2");
             probe.SendComplete();
-            task.Wait(TimeSpan.FromSeconds(3)).Should().BeTrue();
+            future.Wait(TimeSpan.FromSeconds(3)).Should().BeTrue();
             Queue.GetAllMessages().Length.Should().Be(2);
         }
     }

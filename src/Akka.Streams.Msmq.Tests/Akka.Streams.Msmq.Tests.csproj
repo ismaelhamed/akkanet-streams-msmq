@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +14,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <!-- .NET CLI SDK runner for the xUnit.net framework. Supports .NET 4.5.2 or later, .NET Core 1.x, and .NET Core 2.x. -->
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
   </ItemGroup>
 

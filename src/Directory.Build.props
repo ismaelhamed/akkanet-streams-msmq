@@ -1,10 +1,10 @@
 <Project>
   <PropertyGroup>
     <PackageTags>akka;actors;actor model;Akka;concurrency;streams;msmq</PackageTags>
-    <Copyright>Copyright © 2021 Ismael Hamed</Copyright>
+    <Copyright>Copyright © 2023 Ismael Hamed</Copyright>
     <Authors>Ismael Hamed</Authors>
-    <PackageReleaseNotes>First working prototype</PackageReleaseNotes>
-    <VersionPrefix>0.7.0</VersionPrefix>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <VersionPrefix>0.8.0</VersionPrefix>
     <PackageIconUrl>https://getakka.net/images/akkalogo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/ismaelhamed/akka-streams-msmq</PackageProjectUrl>
     <License>
@@ -28,19 +28,16 @@
   <PropertyGroup>
     <AkkaVersion>1.4.40</AkkaVersion>
     <FluentAssertionsVersion>6.7.0</FluentAssertionsVersion>
-    <XunitVersion>2.4.1</XunitVersion>
+    <XunitVersion>2.4.2</XunitVersion>
     <XunitRunnerVersion>2.4.5</XunitRunnerVersion>
     <TestSdkVersion>17.2.0</TestSdkVersion>
   </PropertyGroup>
-  <!-- SourceLink support for all Akka.NET projects -->
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
   <PropertyGroup>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <!-- Optional: Build symbol package (.snupkg) to distribute the PDB containing Source Link -->
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>

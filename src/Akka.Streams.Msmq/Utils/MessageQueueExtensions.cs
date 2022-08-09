@@ -48,7 +48,7 @@ namespace System.Messaging
                             queue.Close(); // ideally we would only do this in case of MessageQueueErrorCode.StaleHandle
                             throw innerException;
                     }
-                });
+                }); 
 
         private static Exception TryUnwrapException(Exception e)
         {

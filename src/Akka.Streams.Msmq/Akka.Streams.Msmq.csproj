@@ -1,14 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
   
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <LangVersion>8.0</LangVersion>
   </PropertyGroup>
-  
-  <ItemGroup>
-    <Compile Remove="Impl\MsmqSinkStage.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Akka.Streams" Version="$(AkkaVersion)" />
@@ -16,10 +11,6 @@
 
   <ItemGroup>
     <Reference Include="System.Messaging" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Impl\" />
   </ItemGroup>
 
 </Project>
