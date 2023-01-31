@@ -45,7 +45,6 @@ Task("Build")
 
 Task("Test")
     .Description("Runs unit tests and outputs test results to the Artifacts directory.")
-    .IsDependentOn("Build")
     .DoesForEach(GetFiles("./src/**/*.Tests.csproj"), project =>
     {
         DotNetTest(project.ToString(), new DotNetTestSettings()

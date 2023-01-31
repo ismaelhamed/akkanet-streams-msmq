@@ -18,7 +18,12 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1.1
 
-    - name: Run the Cake script
+    - name: Build
+      uses: cake-build/cake-action@v1.4.1
+      with:
+        target: Build
+
+    - name: "Run tests"
       uses: cake-build/cake-action@v1.4.1
       with:
         target: Test
