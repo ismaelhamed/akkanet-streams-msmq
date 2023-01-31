@@ -1,3 +1,6 @@
+// Copyright (c) 2023 Ismael Hamed. All rights reserved.
+// See LICENSE file in the root folder for full license information.
+
 using System;
 using System.Linq;
 using System.Messaging;
@@ -12,7 +15,7 @@ namespace Akka.Streams.Msmq.Tests
 {
     [Collection("MsmqQueueSpec")]
     public class MsmqSourceSpec : MsmqSpecBase
-    {      
+    {
         public MsmqSourceSpec(MessageQueueFixture fixture, ITestOutputHelper output)
             : base(fixture, output)
         { }

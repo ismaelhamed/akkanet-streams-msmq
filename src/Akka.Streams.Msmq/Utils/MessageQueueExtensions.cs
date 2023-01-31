@@ -1,3 +1,6 @@
+// Copyright (c) 2023 Ismael Hamed. All rights reserved.
+// See LICENSE file in the root folder for full license information.
+
 using System.Threading.Tasks;
 using Akka.Util;
 
@@ -48,7 +51,7 @@ namespace System.Messaging
                             queue.Close(); // ideally we would only do this in case of MessageQueueErrorCode.StaleHandle
                             throw innerException;
                     }
-                }); 
+                });
 
         private static Exception TryUnwrapException(Exception e)
         {

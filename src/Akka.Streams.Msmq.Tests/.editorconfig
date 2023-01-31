@@ -1,0 +1,13 @@
+# NOTE: Requires **VS2019 16.3** or later
+
+# Dotnet code style settings:
+[*.{cs}]
+
+# VSTHRD002: Avoid problematic synchronous waits
+dotnet_diagnostic.VSTHRD002.severity = none
+
+# VSTHRD104: Offer async methods
+dotnet_diagnostic.VSTHRD104.severity = none
+
+# VSTHRD200: Use "Async" suffix for async methods
+dotnet_diagnostic.VSTHRD200.severity = none

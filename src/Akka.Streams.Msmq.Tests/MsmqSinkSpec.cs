@@ -1,3 +1,6 @@
+// Copyright (c) 2023 Ismael Hamed. All rights reserved.
+// See LICENSE file in the root folder for full license information.
+
 using System;
 using System.Linq;
 using System.Messaging;
@@ -68,7 +71,7 @@ namespace Akka.Streams.Msmq.Tests
                 .ToMaterialized(queueSink, Keep.Both)
                 .Run(Materializer);
 
-            probe.SendNext("1");            
+            probe.SendNext("1");
             EnsureQueueExists(Fixture.QueuePath);
             Thread.Sleep(5);
 

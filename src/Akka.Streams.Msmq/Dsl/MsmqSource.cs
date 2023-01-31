@@ -1,3 +1,6 @@
+// Copyright (c) 2023 Ismael Hamed. All rights reserved.
+// See LICENSE file in the root folder for full license information.
+
 using System;
 using System.Messaging;
 using System.Threading.Tasks;
@@ -26,19 +29,19 @@ namespace Akka.Streams.Msmq
         /// </para>
         /// <para>
         /// Because the internal transaction is committed as soon as the message is emitted downstream,
-        /// or there is no transaction whatsoever, this source will only achieve `At-Most-Once` semantics. 
+        /// or there is no transaction whatsoever, this source will only achieve `At-Most-Once` semantics.
         /// </para>
         /// <para>
         /// This method uses <see cref="MessageQueueSettings.WaitTimeout"/>, so the application might block
         /// the current thread indefinitely if an infinite timeout is specified.
-        /// </para>        
+        /// </para>
         /// <para>
         /// If this method is called on a transactional queue, the message that is received would be returned
         /// to the queue if the transaction is aborted. The message is not permanently removed from the queue until
         /// the transaction is committed.
         /// </para>
         /// </summary>
-        /// <param name="settings">Settings to configure the <see cref="MessageQueue"/>.</param> 
+        /// <param name="settings">Settings to configure the <see cref="MessageQueue"/>.</param>
         /// <param name="queuePath">The location of the queue referenced by the underlying <see cref="MessageQueue"/>.
         /// The syntax for <paramref name="queuePath"/> depends on the type of queue it points to, as shown in the following
         /// <see href="https://learn.microsoft.com/en-us/dotnet/api/system.messaging.messagequeue.path">table</see>.
@@ -56,9 +59,11 @@ namespace Akka.Streams.Msmq
                             await Task.Factory.FromAsync(queue.BeginPeek(settings.WaitTimeout), queue.EndPeek)
                                 .ConfigureAwait(false);
 
+#pragma warning disable VSTHRD103 // Call async methods when in an async method
                             msg = queue.Receive(settings.WaitTimeout, queue.Transactional
                                 ? MessageQueueTransactionType.Single
                                 : MessageQueueTransactionType.None);
+#pragma warning restore VSTHRD103 // Call async methods when in an async method
                         }
                         catch (MessageQueueException ex) when (ex.MessageQueueErrorCode == MessageQueueErrorCode.IOTimeout)
                         {
@@ -96,11 +101,11 @@ namespace Akka.Streams.Msmq
         /// the transaction is committed.
         /// </para>
         /// </summary>
-        /// <param name="settings">Settings to configure the <see cref="MessageQueue"/>.</param> 
+        /// <param name="settings">Settings to configure the <see cref="MessageQueue"/>.</param>
         /// <param name="queuePath">The location of the queue referenced by the underlying <see cref="MessageQueue"/>.
         /// The syntax for <paramref name="queuePath"/> depends on the type of queue it points to, as shown in the following
         /// <see href="https://learn.microsoft.com/en-us/dotnet/api/system.messaging.messagequeue.path">table</see>.
-        /// </param>          
+        /// </param>
         public static Source<ICommittableMessage, Task<NotUsed>> Committable(MessageQueueSettings settings, string queuePath) =>
             Source.Lazily(() =>
             {
@@ -117,7 +122,9 @@ namespace Akka.Streams.Msmq
 
                             trx = new MessageQueueTransaction();
                             trx.Begin();
+#pragma warning disable VSTHRD103 // Call async methods when in an async method
                             msg = queue.Receive(settings.WaitTimeout, trx);
+#pragma warning restore VSTHRD103 // Call async methods when in an async method
                             return new CommittableMessage(msg, trx);
                         }
                         catch (MessageQueueException ex) when (ex.MessageQueueErrorCode == MessageQueueErrorCode.IOTimeout)
@@ -160,11 +167,11 @@ namespace Akka.Streams.Msmq
         /// the transaction is committed.
         /// </para>
         /// </summary>
-        /// <param name="settings">Settings to configure the <see cref="MessageQueue"/>.</param> 
+        /// <param name="settings">Settings to configure the <see cref="MessageQueue"/>.</param>
         /// <param name="queuePath">The location of the queue referenced by the underlying <see cref="MessageQueue"/>.
         /// The syntax for <paramref name="queuePath"/> depends on the type of queue it points to, as shown in the following
         /// <see href="https://learn.microsoft.com/en-us/dotnet/api/system.messaging.messagequeue.path">table</see>.
-        /// </param> 
+        /// </param>
         public static SourceWithContext<Message, MessageQueueTransaction, Task<NotUsed>> WithTransactionContext(MessageQueueSettings settings, string queuePath) =>
             Source.Lazily(() =>
             {
@@ -181,7 +188,9 @@ namespace Akka.Streams.Msmq
 
                             trx = new MessageQueueTransaction();
                             trx.Begin();
+#pragma warning disable VSTHRD103 // Call async methods when in an async method
                             msg = queue.Receive(settings.WaitTimeout, trx);
+#pragma warning restore VSTHRD103 // Call async methods when in an async method
                             return (msg, trx);
                         }
                         catch (MessageQueueException ex) when (ex.MessageQueueErrorCode == MessageQueueErrorCode.IOTimeout)
@@ -243,7 +252,7 @@ namespace Akka.Streams.Msmq
     }
 
     /// <summary>
-    /// Commit a MessageQueueTransaction that is included in a <see cref="MsmqSource.CommittableMessage"/>
+    /// Commit a MessageQueueTransaction that is included in a <see cref="MsmqSource.CommittableMessage"/>.
     /// </summary>
     public interface ICommittableMessage
     {

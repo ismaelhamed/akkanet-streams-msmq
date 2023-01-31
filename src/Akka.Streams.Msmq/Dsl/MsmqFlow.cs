@@ -1,3 +1,6 @@
+// Copyright (c) 2023 Ismael Hamed. All rights reserved.
+// See LICENSE file in the root folder for full license information.
+
 using System.Messaging;
 using System.Threading.Tasks;
 using Akka.Streams.Dsl;
@@ -22,7 +25,7 @@ namespace Akka.Streams.Msmq
         /// </list>
         /// </para>
         /// </summary>
-        /// <param name="settings">Settings to configure the <see cref="MessageQueue"/>.</param> 
+        /// <param name="settings">Settings to configure the <see cref="MessageQueue"/>.</param>
         /// <param name="queuePath">The location of the queue referenced by the underlying <see cref="MessageQueue"/>.
         /// The syntax for <paramref name="queuePath"/> depends on the type of queue it points to, as shown in the following
         /// <see href="https://learn.microsoft.com/en-us/dotnet/api/system.messaging.messagequeue.path">table</see>.
@@ -53,7 +56,7 @@ namespace Akka.Streams.Msmq
         /// <see cref="MessageQueueTransaction"/>, providing `Exactly-Once` semantic guarantee.
         /// </para>
         /// </summary>
-        /// <param name="settings">Settings to configure the <see cref="MessageQueue"/>.</param> 
+        /// <param name="settings">Settings to configure the <see cref="MessageQueue"/>.</param>
         /// <param name="queuePath">The location of the queue referenced by the underlying <see cref="MessageQueue"/>.
         /// The syntax for <paramref name="queuePath"/> depends on the type of queue it points to, as shown in the following
         /// <see href="https://learn.microsoft.com/en-us/dotnet/api/system.messaging.messagequeue.path">table</see>.

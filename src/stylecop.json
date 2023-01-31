@@ -1,0 +1,13 @@
+{
+    "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
+    "settings": {
+      "documentationRules": {
+        "companyName": "Ismael Hamed",
+        "copyrightText": "Copyright (c) 2023 {companyName}. All rights reserved.\nSee {licenseFile} file in the root folder for full license information.",
+        "variables": {
+            "licenseFile": "LICENSE"
+        },
+        "xmlHeader": false
+      }
+    }
+  }

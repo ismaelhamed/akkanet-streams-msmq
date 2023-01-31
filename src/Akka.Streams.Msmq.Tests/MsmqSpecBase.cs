@@ -1,3 +1,6 @@
+// Copyright (c) 2023 Ismael Hamed. All rights reserved.
+// See LICENSE file in the root folder for full license information.
+
 using System;
 using System.Messaging;
 using System.Threading;
@@ -15,7 +18,8 @@ namespace Akka.Streams.Msmq.Tests
         protected readonly MessageQueueFixture Fixture;
 
         protected ActorMaterializer Materializer { get; }
-        public MessageQueue Queue { get; }
+
+        protected MessageQueue Queue { get; }
 
         protected MsmqSpecBase(MessageQueueFixture fixture, ITestOutputHelper output)
             : base((ActorSystem)null, output)
@@ -28,19 +32,19 @@ namespace Akka.Streams.Msmq.Tests
             };
         }
 
-        protected void EnsureQueueExists(string queuePath, bool transactional = true)
+        protected static void EnsureQueueExists(string queuePath, bool transactional = true)
         {
             if (!MessageQueue.Exists(queuePath))
                 MessageQueue.Create(queuePath, transactional);
         }
 
-        protected void EnsureQueueIsDeleted(string queuePath)
+        protected static void EnsureQueueIsDeleted(string queuePath)
         {
             if (MessageQueue.Exists(queuePath))
                 MessageQueue.Delete(queuePath);
         }
 
-        protected void EnsureQueueIsRecreated(string queuePath, bool transactional = true)
+        protected static void EnsureQueueIsRecreated(string queuePath, bool transactional = true)
         {
             if (MessageQueue.Exists(queuePath))
                 MessageQueue.Delete(queuePath);

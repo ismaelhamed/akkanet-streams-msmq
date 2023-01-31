@@ -17,6 +17,10 @@
     <XunitRunnerVersion>2.4.5</XunitRunnerVersion>
     <TestSdkVersion>17.4.1</TestSdkVersion>
     <PackageTags>akka;actors;actor model;Akka;concurrency;streams;msmq</PackageTags>
+    <AsyncFixerVersion>1.6.0</AsyncFixerVersion>
+    <ThreadingAnalyzersVersion>17.4.33</ThreadingAnalyzersVersion>
+    <NetAnalyzersVersion>7.0.0</NetAnalyzersVersion>
+    <StyleCopVersion>1.1.118</StyleCopVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,4 +33,8 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)\stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
 </Project>
