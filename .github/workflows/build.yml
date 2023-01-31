@@ -1,0 +1,24 @@
+name: Build CI
+on:
+  push:
+  pull_request:
+    branches:
+      - dev
+jobs:
+  build:
+    runs-on: windows-latest
+    if: github.repository == 'ismaelhamed/akka-streams-msmq'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Run the Cake script
+      uses: cake-build/cake-action@v1.4.1
+      with:
+        target: Test
