@@ -3,19 +3,24 @@ using System.Messaging;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Xunit;
 using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Akka.Streams.Msmq.Tests
 {
-    // https://github.com/AkkaNetContrib/Alpakka/blob/dev/Azure/src/Akka.Streams.Azure.StorageQueue.Tests/QueueSpecBase.cs
-    public abstract class MsmqSpecBase : Akka.TestKit.Xunit2.TestKit
+    [CollectionDefinition("MsmqQueueSpec", DisableParallelization = true)]
+    public abstract class MsmqSpecBase : Akka.TestKit.Xunit2.TestKit, IClassFixture<MessageQueueFixture>
     {
+        protected readonly MessageQueueFixture Fixture;
+
         protected ActorMaterializer Materializer { get; }
         public MessageQueue Queue { get; }
 
         protected MsmqSpecBase(MessageQueueFixture fixture, ITestOutputHelper output)
             : base((ActorSystem)null, output)
         {
+            Fixture = fixture;
             Materializer = Sys.Materializer();
             Queue = new MessageQueue(@".\Private$\MsmqSpecQueue")
             {

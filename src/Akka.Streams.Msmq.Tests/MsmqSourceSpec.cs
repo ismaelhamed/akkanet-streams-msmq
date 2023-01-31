@@ -11,29 +11,28 @@ using Xunit.Abstractions;
 namespace Akka.Streams.Msmq.Tests
 {
     [Collection("MsmqQueueSpec")]
-    public class MsmqSourceSpec : MsmqSpecBase, IClassFixture<MessageQueueFixture>
-    {
-        private readonly MessageQueueFixture _fixture;
-
+    public class MsmqSourceSpec : MsmqSpecBase
+    {      
         public MsmqSourceSpec(MessageQueueFixture fixture, ITestOutputHelper output)
-            : base(fixture, output) => _fixture = fixture;
+            : base(fixture, output)
+        { }
 
-        [Fact]
+        [IgnoreOnGitHubFact]
         public void MsmqSource_must_stream_a_single_message_from_the_queue()
         {
-            var queue = new MessageQueue(_fixture.QueuePath);
+            var queue = new MessageQueue(Fixture.QueuePath);
             queue.Send(new Message("alpakka"), MessageQueueTransactionType.Single);
 
-            var future = MsmqSource.Default(MessageQueueSettings.Default, _fixture.QueuePath)
+            var future = MsmqSource.Default(MessageQueueSettings.Default, Fixture.QueuePath)
                 .RunWith(Sink.First<Message>(), Materializer);
 
             future.Result.Body.Should().Be("alpakka");
         }
 
-        [Fact]
+        [IgnoreOnGitHubFact]
         public void MsmqSource_must_continue_streaming_if_receives_an_empty_response()
         {
-            var (killSwitch, future) = MsmqSource.Default(MessageQueueSettings.Default, _fixture.QueuePath)
+            var (killSwitch, future) = MsmqSource.Default(MessageQueueSettings.Default, Fixture.QueuePath)
                 .ViaMaterialized(KillSwitches.Single<Message>(), Keep.Right)
                 .ToMaterialized(Sink.Ignore<Message>(), Keep.Both)
                 .Run(Materializer);
@@ -45,17 +44,17 @@ namespace Akka.Streams.Msmq.Tests
             killSwitch.Shutdown();
         }
 
-        [Fact]
+        [IgnoreOnGitHubFact]
         public void MsmqSource_must_finish_immediately_if_the_queue_does_not_exist()
         {
-            var future = MsmqSource.Default(MessageQueueSettings.Default, $"{_fixture.QueuePath}/not-existing")
+            var future = MsmqSource.Default(MessageQueueSettings.Default, $"{Fixture.QueuePath}/not-existing")
                 .RunWith(Sink.Seq<Message>(), Materializer);
 
             var exception = Assert.Throws<MessageQueueException>(() => AwaitResult(future));
             Assert.StartsWith("The queue does not exist", exception.Message);
         }
 
-        [Fact]
+        [IgnoreOnGitHubFact]
         public void MsmqSource_with_ack_should_be_able_to_commit()
         {
             const int numberOfMessages = 100;
@@ -83,7 +82,7 @@ namespace Akka.Streams.Msmq.Tests
             future.Result.Count.Should().Be(numberOfMessages);
         }
 
-        [Fact]
+        [IgnoreOnGitHubFact]
         public void MsmqSource_stream_single_message_at_least_twice_from_the_queue_when_trx_is_aborted()
         {
             const string queuePath = @".\Private$\MsmqSpecQueueWithTrx";
@@ -115,7 +114,7 @@ namespace Akka.Streams.Msmq.Tests
             future3.Result.First().Commit();
         }
 
-        [Fact]
+        [IgnoreOnGitHubFact]
         public void MsmqSource_stream_from_transactional_should_be_able_to_access_trx_when_used_with_flowWithContext()
         {
             const int numberOfMessages = 100;

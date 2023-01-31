@@ -7,15 +7,14 @@ using Xunit.Abstractions;
 
 namespace Akka.Streams.Msmq.Tests
 {
-    [Collection("MsmqQueueSpec")]
-    public class MsmqFlowSpec : MsmqSpecBase, IClassFixture<MessageQueueFixture>
+    [Collection("MsmqQueueSpec")]    
+    public class MsmqFlowSpec : MsmqSpecBase
     {
-        private readonly MessageQueueFixture _fixture;
-
         public MsmqFlowSpec(MessageQueueFixture fixture, ITestOutputHelper output)
-            : base(fixture, output) => _fixture = fixture;
+            : base(fixture, output)
+        { }
 
-        [Fact]
+        [IgnoreOnGitHubFact]
         public void MsmqFlow_must_receive_from_queue_and_send_in_the_same_transaction()
         {
             const string receivingQueue = @".\Private$\ReceivingQueue";

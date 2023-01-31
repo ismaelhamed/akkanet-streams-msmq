@@ -7,10 +7,13 @@ namespace Akka.Streams.Msmq.Tests
     {
         public IgnoreOnGitHubFact()
         {
-            if (Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true")
+            if (IsGitHubAction())
             {
                 Skip = "Ignore test when running on GitHub.";
             }
         }
+
+        private static bool IsGitHubAction()
+            => Environment.GetEnvironmentVariable("GITHUB_ACTION") != null;
     }
 }

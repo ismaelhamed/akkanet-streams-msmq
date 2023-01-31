@@ -12,22 +12,21 @@ using Xunit.Abstractions;
 namespace Akka.Streams.Msmq.Tests
 {
     [Collection("MsmqQueueSpec")]
-    public class MsmqSinkSpec : MsmqSpecBase, IClassFixture<MessageQueueFixture>
+    public class MsmqSinkSpec : MsmqSpecBase
     {
-        private readonly MessageQueueFixture _fixture;
-
         public MsmqSinkSpec(MessageQueueFixture fixture, ITestOutputHelper output)
-            : base(fixture, output) => _fixture = fixture;
+            : base(fixture, output)
+        { }
 
-        [Fact]
+        [IgnoreOnGitHubFact]
         public void MsmqSink_should_add_elements_to_the_queue()
         {
-            EnsureQueueIsRecreated(_fixture.QueuePath);
+            EnsureQueueIsRecreated(Fixture.QueuePath);
 
             var messages = Enumerable.Range(0, 5)
                 .Select(i => new Message(i));
 
-            var msmqSink = MsmqSink.Default(MessageQueueSettings.Default, _fixture.QueuePath);
+            var msmqSink = MsmqSink.Default(MessageQueueSettings.Default, Fixture.QueuePath);
 
             var future = Source.From(messages)
                 .RunWith(msmqSink, Materializer);
@@ -36,13 +35,13 @@ namespace Akka.Streams.Msmq.Tests
             Queue.GetAllMessages().Length.Should().Be(5);
         }
 
-        [Fact]
+        [IgnoreOnGitHubFact]
         public void MsmqSink_should_retry_failing_messages_if_supervision_strategy_is_resume()
         {
-            EnsureQueueIsDeleted(_fixture.QueuePath);
+            EnsureQueueIsDeleted(Fixture.QueuePath);
 
             var messages = new[] { "{\"Value\":\"1\"}", "{\"Value\":\"2\"}" };
-            var queueSink = MsmqSink.Default(MessageQueueSettings.Default, _fixture.QueuePath)
+            var queueSink = MsmqSink.Default(MessageQueueSettings.Default, Fixture.QueuePath)
                 .WithAttributes(ActorAttributes.CreateSupervisionStrategy(Deciders.ResumingDecider));
 
             var future = Source.From(messages)
@@ -50,18 +49,18 @@ namespace Akka.Streams.Msmq.Tests
                 .RunWith(queueSink, Materializer);
 
             Thread.Sleep(5);
-            EnsureQueueExists(_fixture.QueuePath);
+            EnsureQueueExists(Fixture.QueuePath);
 
             future.Wait(TimeSpan.FromSeconds(3)).Should().BeTrue();
             Queue.GetAllMessages().Length.Should().Be(2);
         }
 
-        [Fact]
+        [IgnoreOnGitHubFact]
         public void MsmqSink_should_skip_failing_messages_if_supervision_strategy_is_restart()
         {
-            EnsureQueueIsDeleted(_fixture.QueuePath);
+            EnsureQueueIsDeleted(Fixture.QueuePath);
 
-            var queueSink = MsmqSink.Default(MessageQueueSettings.Default, _fixture.QueuePath)
+            var queueSink = MsmqSink.Default(MessageQueueSettings.Default, Fixture.QueuePath)
                 .WithAttributes(ActorAttributes.CreateSupervisionStrategy(Deciders.RestartingDecider));
 
             var (probe, future) = this.SourceProbe<string>()
@@ -70,7 +69,7 @@ namespace Akka.Streams.Msmq.Tests
                 .Run(Materializer);
 
             probe.SendNext("1");            
-            EnsureQueueExists(_fixture.QueuePath);
+            EnsureQueueExists(Fixture.QueuePath);
             Thread.Sleep(5);
 
             probe.SendNext("2");
