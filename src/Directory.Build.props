@@ -26,11 +26,11 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
-    <AkkaVersion>1.4.40</AkkaVersion>
-    <FluentAssertionsVersion>6.7.0</FluentAssertionsVersion>
+    <AkkaVersion>1.4.49</AkkaVersion>
+    <FluentAssertionsVersion>6.9.0</FluentAssertionsVersion>
     <XunitVersion>2.4.2</XunitVersion>
     <XunitRunnerVersion>2.4.5</XunitRunnerVersion>
-    <TestSdkVersion>17.2.0</TestSdkVersion>
+    <TestSdkVersion>17.4.1</TestSdkVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
