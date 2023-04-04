@@ -6,6 +6,9 @@
 # VSTHRD002: Avoid problematic synchronous waits
 dotnet_diagnostic.VSTHRD002.severity = none
 
+# VSTHRD003: Avoid awaiting foreign Tasks
+dotnet_diagnostic.VSTHRD003.severity = none
+
 # VSTHRD104: Offer async methods
 dotnet_diagnostic.VSTHRD104.severity = none
 

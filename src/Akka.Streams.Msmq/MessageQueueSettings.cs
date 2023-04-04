@@ -9,17 +9,17 @@ namespace Akka.Streams.Msmq
     public class MessageQueueSettings
     {
         /// <summary>
-        /// Gets a value that indicates whether this <see cref="MessageQueue"/> has exclusive access to receive messages from the queue.
+        /// Gets a value indicating whether this <see cref="MessageQueue"/> has exclusive access to receive messages from the queue.
         /// </summary>
         public bool DenySharedReceive { get; }
 
         /// <summary>
-        /// Gets a value that indicates whether a cache of connections will be maintained by the application.
+        /// Gets a value indicating whether a cache of connections will be maintained by the application.
         /// </summary>
         public bool EnableConnectionCache { get; }
 
         /// <summary>
-        /// Gets a value that indicates whether received messages are copied to the journal queue.
+        /// Gets a value indicating whether received messages are copied to the journal queue.
         /// </summary>
         public bool UseJournalQueue { get; }
 
@@ -50,7 +50,7 @@ namespace Akka.Streams.Msmq
         public int Parallelism { get; }
 
         /// <summary>
-        /// Default <see cref="MessageQueueSettings"/>
+        /// Default <see cref="MessageQueueSettings"/>.
         /// </summary>
         public static MessageQueueSettings Default = new MessageQueueSettings(
             false,
