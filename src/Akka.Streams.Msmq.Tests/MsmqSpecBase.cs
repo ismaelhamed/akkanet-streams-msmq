@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Xunit;
 using Xunit.Abstractions;
-using Xunit.Sdk;
 
 namespace Akka.Streams.Msmq.Tests
 {

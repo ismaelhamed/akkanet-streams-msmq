@@ -8,6 +8,7 @@
     <PackageLicenseUrl>https://github.com/ismaelhamed/akka-streams-msmq/blob/dev/LICENSE</PackageLicenseUrl>
     <PackageReleaseNotes>Updated to Akka.Persistence v1.4.49</PackageReleaseNotes>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
