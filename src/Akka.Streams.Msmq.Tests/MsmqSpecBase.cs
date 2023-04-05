@@ -51,8 +51,6 @@ namespace Akka.Streams.Msmq.Tests
             _ = MessageQueue.Create(queuePath, transactional);
         }
 
-        public new void Dispose() => Queue.Purge();
-
         public static T AwaitResult<T>(Task<T> assertionTask, TimeSpan? atMost = null)
         {
             try

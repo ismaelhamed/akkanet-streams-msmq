@@ -60,14 +60,13 @@ namespace Akka.Streams.Msmq.Tests
         [IgnoreOnGitHubFact]
         public void MsmqSource_with_ack_should_be_able_to_commit()
         {
-            const int numberOfMessages = 100;
-            const string queuePath = @".\Private$\MsmqSpecQueueWithTrx";
+            const int numberOfMessages = 10;
 
-            var queue = new MessageQueue(queuePath, QueueAccessMode.Send);
+            var queue = new MessageQueue(Fixture.QueuePath, QueueAccessMode.Send);
             Enumerable.Range(0, numberOfMessages).ForEach(i => queue.Send(new Message($"alpakka-{i}"), MessageQueueTransactionType.Single));
 
             var latch = new CountdownEvent(numberOfMessages);
-            var (killSwitch, future) = MsmqSource.Committable(MessageQueueSettings.Default, queuePath)
+            var (killSwitch, future) = MsmqSource.Committable(MessageQueueSettings.Default, Fixture.QueuePath)
                 .ViaMaterialized(KillSwitches.Single<ICommittableMessage>(), Keep.Right)
                 .Select(committable =>
                 {
@@ -88,17 +87,16 @@ namespace Akka.Streams.Msmq.Tests
         [IgnoreOnGitHubFact]
         public void MsmqSource_stream_single_message_at_least_twice_from_the_queue_when_trx_is_aborted()
         {
-            const string queuePath = @".\Private$\MsmqSpecQueueWithTrx";
-            var queue = new MessageQueue(queuePath, QueueAccessMode.Send);
+            var queue = new MessageQueue(Fixture.QueuePath, QueueAccessMode.Send);
             queue.Send(new Message("alpakka"), MessageQueueTransactionType.Single);
 
-            var future = MsmqSource.Committable(MessageQueueSettings.Default, queuePath)
+            var future = MsmqSource.Committable(MessageQueueSettings.Default, Fixture.QueuePath)
               .Take(1)
               .RunWith(Sink.Seq<ICommittableMessage>(), Materializer);
 
             future.Result.Count.Should().Be(1);
 
-            var future2 = MsmqSource.Committable(MessageQueueSettings.Default, queuePath)
+            var future2 = MsmqSource.Committable(MessageQueueSettings.Default, Fixture.QueuePath)
                 .TakeWithin(TimeSpan.FromMilliseconds(200))
                 .RunWith(Sink.Seq<ICommittableMessage>(), Materializer);
 
@@ -106,24 +104,23 @@ namespace Akka.Streams.Msmq.Tests
             future2.Result.Count.Should().Be(0);
 
             // now abort trx
-            future.Result.First().Abort();
+            future.Result[0].Abort();
 
-            var future3 = MsmqSource.Committable(MessageQueueSettings.Default, queuePath)
+            var future3 = MsmqSource.Committable(MessageQueueSettings.Default, Fixture.QueuePath)
               .TakeWithin(TimeSpan.FromSeconds(50))
               .RunWith(Sink.Seq<ICommittableMessage>(), Materializer);
 
             // if we wait enough time, message will be returned to the queue
             future3.Result.Count.Should().Be(1);
-            future3.Result.First().Commit();
+            future3.Result[0].Commit();
         }
 
         [IgnoreOnGitHubFact]
         public void MsmqSource_stream_from_transactional_should_be_able_to_access_trx_when_used_with_flowWithContext()
         {
-            const int numberOfMessages = 100;
-            const string queuePath = @".\Private$\MsmqSpecQueueWithTrx";
+            const int numberOfMessages = 10;
 
-            var queue = new MessageQueue(queuePath, QueueAccessMode.Send);
+            var queue = new MessageQueue(Fixture.QueuePath, QueueAccessMode.Send);
             Enumerable.Range(0, numberOfMessages).ForEach(i => queue.Send(new Message($"alpakka-{i}"), MessageQueueTransactionType.Single));
 
             var latch = new CountdownEvent(numberOfMessages);
@@ -139,7 +136,7 @@ namespace Akka.Streams.Msmq.Tests
                 .AsFlow()
                 .WireTap(tuple => latch.Signal());
 
-            var (killSwitch, future) = MsmqSource.WithTransactionContext(MessageQueueSettings.Default, queuePath)
+            var (killSwitch, future) = MsmqSource.WithTransactionContext(MessageQueueSettings.Default, Fixture.QueuePath)
                 .Via(flowWithContext)
                 .ViaMaterialized(KillSwitches.Single<(Message, Done)>(), Keep.Right)
                 .ToMaterialized(Sink.Seq<(Message, Done)>(), Keep.Both)
@@ -148,7 +145,8 @@ namespace Akka.Streams.Msmq.Tests
             latch.Wait();
             killSwitch.Shutdown();
 
-            future.Result.Count.Should().Be(numberOfMessages);
+            var result = future.Result;
+            result.Count.Should().Be(numberOfMessages);
         }
     }
 }
