@@ -54,7 +54,7 @@ namespace Akka.Streams.Msmq
         /// </summary>
         public static MessageQueueSettings Default = new MessageQueueSettings(
             false,
-            false,
+            true,
             false,
             QueueAccessMode.SendAndReceive);
 
@@ -77,6 +77,9 @@ namespace Akka.Streams.Msmq
             WaitTimeout = waitTimeout ?? TimeSpan.FromMilliseconds(10);
             Parallelism = parallelism ?? 1;
         }
+
+        public MessageQueueSettings WithEnableConnectionCache(bool enableCache) =>
+            Copy(enableCache: enableCache);
 
         public MessageQueueSettings WithMessagePropertyFilter(MessagePropertyFilter messagePropertyFilter) =>
             Copy(messagePropertyFilter: messagePropertyFilter);
