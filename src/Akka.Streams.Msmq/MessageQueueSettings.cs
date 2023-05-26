@@ -116,6 +116,7 @@ namespace Akka.Streams.Msmq
             Body = true,
             CorrelationId = true,
             Extension = true,
+            Label = true,
             Recoverable = true,
             ResponseQueue = true,
             TimeToBeReceived = true
