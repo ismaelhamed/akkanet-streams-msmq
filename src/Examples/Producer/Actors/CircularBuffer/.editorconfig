@@ -1,0 +1,3 @@
+# change the below header to whatever regex appropriate to specify files to exclude from analyzers
+[*.cs]
+dotnet_analyzer_diagnostic.severity = none
