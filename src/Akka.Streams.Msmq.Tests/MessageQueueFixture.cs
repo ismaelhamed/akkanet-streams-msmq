@@ -8,7 +8,9 @@ namespace Akka.Streams.Msmq.Tests
 {
     public class MessageQueueFixture : IDisposable
     {
-        public string QueuePath { get; } = @".\Private$\MsmqSpecQueue";
+        public string SourceQueuePath { get; } = @".\Private$\SourceQueue";
+
+        public string DestinationQueuePath { get; } = @".\Private$\DestinationQueue";
 
         public IMessageFormatter Formatter { get; } = new XmlMessageFormatter(new[] { typeof(string) });
 
@@ -23,10 +25,8 @@ namespace Akka.Streams.Msmq.Tests
             if (disposing)
             {
                 // clean up code
-                if (MessageQueue.Exists(QueuePath))
-                    MessageQueue.Delete(QueuePath);
-
-                _ = MessageQueue.Create(QueuePath, true);
+                if (MessageQueue.Exists(SourceQueuePath)) MessageQueue.Delete(SourceQueuePath);
+                if (MessageQueue.Exists(DestinationQueuePath)) MessageQueue.Delete(DestinationQueuePath);
             }
         }
     }

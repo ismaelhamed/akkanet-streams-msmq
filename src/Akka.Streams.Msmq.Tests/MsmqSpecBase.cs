@@ -11,7 +11,6 @@ using Xunit.Abstractions;
 
 namespace Akka.Streams.Msmq.Tests
 {
-    [CollectionDefinition("MsmqQueueSpec", DisableParallelization = true)]
     public abstract class MsmqSpecBase : Akka.TestKit.Xunit2.TestKit, IClassFixture<MessageQueueFixture>
     {
         protected readonly MessageQueueFixture Fixture;
@@ -20,15 +19,15 @@ namespace Akka.Streams.Msmq.Tests
 
         protected MessageQueue Queue { get; }
 
+        protected MessageQueue DLQueuePath { get; }
+
         protected MsmqSpecBase(MessageQueueFixture fixture, ITestOutputHelper output)
             : base((ActorSystem)null, output)
         {
             Fixture = fixture;
             Materializer = Sys.Materializer();
-            Queue = new MessageQueue(@".\Private$\MsmqSpecQueue")
-            {
-                Formatter = fixture.Formatter
-            };
+            Queue = new MessageQueue(Fixture.SourceQueuePath) { Formatter = fixture.Formatter };
+            DLQueuePath = new MessageQueue(Fixture.DestinationQueuePath) { Formatter = fixture.Formatter };
         }
 
         protected static void EnsureQueueExists(string queuePath, bool transactional = true)

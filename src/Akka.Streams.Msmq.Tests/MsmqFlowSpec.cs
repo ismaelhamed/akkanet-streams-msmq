@@ -20,20 +20,16 @@ namespace Akka.Streams.Msmq.Tests
         [IgnoreOnGitHubFact]
         public void MsmqFlow_must_receive_from_queue_and_send_in_the_same_transaction()
         {
-            const string receivingQueue = @".\Private$\ReceivingQueue";
-            const string sendingQueue = @".\Private$\SendingQueue";
-
-            EnsureQueueIsRecreated(receivingQueue, transactional: true);
-            EnsureQueueIsRecreated(sendingQueue, transactional: true);
+            EnsureQueueIsRecreated(Fixture.SourceQueuePath);
+            EnsureQueueIsRecreated(Fixture.DestinationQueuePath);
 
             var expectedMessagesBodies = new[] { "test-1", "test-2" };
 
-            var queue = new MessageQueue(receivingQueue, QueueAccessMode.SendAndReceive);
             foreach (var msg in expectedMessagesBodies)
-                queue.Send(new Message(msg), MessageQueueTransactionType.Single);
+                Queue.Send(new Message(msg), MessageQueueTransactionType.Single);
 
-            var done = MsmqSource.WithTransactionContext(MessageQueueSettings.Default, receivingQueue)
-                .Via(MsmqFlow.WithTransactionContext(MessageQueueSettings.Default, sendingQueue))
+            var done = MsmqSource.WithTransactionContext(MessageQueueSettings.Default, Fixture.SourceQueuePath)
+                .Via(MsmqFlow.WithTransactionContext(MessageQueueSettings.Default, Fixture.DestinationQueuePath))
                 .AsSource()
                 .TakeWithin(TimeSpan.FromMilliseconds(200))
                 .Select(tuple =>
@@ -49,6 +45,7 @@ namespace Akka.Streams.Msmq.Tests
                 .Run(Sys.Materializer());
 
             done.Result.Count.Should().Be(expectedMessagesBodies.Length);
+            DLQueuePath.GetAllMessages().Length.Should().Be(expectedMessagesBodies.Length);
         }
     }
 }

@@ -24,12 +24,12 @@ namespace Akka.Streams.Msmq.Tests
         [IgnoreOnGitHubFact]
         public void MsmqSink_should_add_elements_to_the_queue()
         {
-            EnsureQueueIsRecreated(Fixture.QueuePath);
+            EnsureQueueIsRecreated(Fixture.SourceQueuePath);
 
             var messages = Enumerable.Range(0, 5)
                 .Select(i => new Message(i));
 
-            var msmqSink = MsmqSink.Default(MessageQueueSettings.Default, Fixture.QueuePath);
+            var msmqSink = MsmqSink.Default(MessageQueueSettings.Default, Fixture.SourceQueuePath);
 
             var future = Source.From(messages)
                 .RunWith(msmqSink, Materializer);
@@ -41,10 +41,10 @@ namespace Akka.Streams.Msmq.Tests
         [IgnoreOnGitHubFact]
         public void MsmqSink_should_retry_failing_messages_if_supervision_strategy_is_resume()
         {
-            EnsureQueueIsDeleted(Fixture.QueuePath);
+            EnsureQueueIsDeleted(Fixture.SourceQueuePath);
 
             var messages = new[] { "{\"Value\":\"1\"}", "{\"Value\":\"2\"}" };
-            var queueSink = MsmqSink.Default(MessageQueueSettings.Default, Fixture.QueuePath)
+            var queueSink = MsmqSink.Default(MessageQueueSettings.Default, Fixture.SourceQueuePath)
                 .WithAttributes(ActorAttributes.CreateSupervisionStrategy(Deciders.ResumingDecider));
 
             var future = Source.From(messages)
@@ -52,7 +52,7 @@ namespace Akka.Streams.Msmq.Tests
                 .RunWith(queueSink, Materializer);
 
             Thread.Sleep(5);
-            EnsureQueueExists(Fixture.QueuePath);
+            EnsureQueueExists(Fixture.SourceQueuePath);
 
             future.Wait(TimeSpan.FromSeconds(3)).Should().BeTrue();
             Queue.GetAllMessages().Length.Should().Be(2);
@@ -61,9 +61,9 @@ namespace Akka.Streams.Msmq.Tests
         [IgnoreOnGitHubFact]
         public void MsmqSink_should_skip_failing_messages_if_supervision_strategy_is_restart()
         {
-            EnsureQueueIsDeleted(Fixture.QueuePath);
+            EnsureQueueIsDeleted(Fixture.SourceQueuePath);
 
-            var queueSink = MsmqSink.Default(MessageQueueSettings.Default, Fixture.QueuePath)
+            var queueSink = MsmqSink.Default(MessageQueueSettings.Default, Fixture.SourceQueuePath)
                 .WithAttributes(ActorAttributes.CreateSupervisionStrategy(Deciders.RestartingDecider));
 
             var (probe, future) = this.SourceProbe<string>()
@@ -72,7 +72,7 @@ namespace Akka.Streams.Msmq.Tests
                 .Run(Materializer);
 
             probe.SendNext("1");
-            EnsureQueueExists(Fixture.QueuePath);
+            EnsureQueueExists(Fixture.SourceQueuePath);
             Thread.Sleep(5);
 
             probe.SendNext("2");
